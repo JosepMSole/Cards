@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Deck v2-24</title>
+<title>Deck v3-5</title>
 
 <style>
 :root{
@@ -52,6 +52,161 @@ header button.active{
   border:1px solid rgba(255,255,255,.2);
   font-weight:900;
 }
+
+/* ===== v3-5 HEADER FX ===== */
+header{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:var(--headerH);
+  background:
+    radial-gradient(1200px 120px at 50% 0%, rgba(124,92,255,.22), transparent 70%),
+    linear-gradient(180deg, rgba(0,0,0,.92), rgba(0,0,0,.78));
+  border-bottom:1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow:hidden;
+}
+header::before{
+  content:"";
+  position:absolute;
+  inset:-40px -60px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255,255,255,.045) 0px,
+      rgba(255,255,255,.045) 1px,
+      transparent 2px,
+      transparent 6px
+    );
+  opacity:.25;
+  mix-blend-mode:overlay;
+  pointer-events:none;
+  animation:scanMove 4.5s linear infinite;
+}
+header::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: radial-gradient(600px 90px at 50% 10%, rgba(45,212,191,.10), transparent 65%);
+  opacity:.8;
+  pointer-events:none;
+}
+@keyframes scanMove{
+  0%{ transform:translateY(0); }
+  100%{ transform:translateY(46px); }
+}
+
+header button.hdrBtn{
+  position:relative;
+  padding:10px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  user-select:none;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  letter-spacing:.4px;
+  text-shadow:0 1px 0 rgba(0,0,0,.55);
+  transform:translateZ(0);
+  transition:
+    transform .12s ease,
+    box-shadow .18s ease,
+    border-color .18s ease,
+    filter .18s ease;
+  isolation:isolate;
+}
+header button.hdrBtn .ico{
+  font-size:18px;
+  line-height:1;
+  filter:drop-shadow(0 0 10px rgba(124,92,255,.25));
+}
+header button.hdrBtn::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:16px;
+  background:
+    radial-gradient(160px 36px at 20% 0%, rgba(45,212,191,.22), transparent 60%),
+    radial-gradient(180px 42px at 80% 100%, rgba(124,92,255,.18), transparent 60%);
+  opacity:.0;
+  transition:opacity .18s ease;
+  pointer-events:none;
+  z-index:-1;
+}
+header button.hdrBtn::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:14px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  transform:translateX(-140%);
+  opacity:.0;
+  pointer-events:none;
+  mix-blend-mode:screen;
+}
+header button.hdrBtn:hover{
+  transform:translateY(-1px);
+  border-color:rgba(124,92,255,.35);
+  box-shadow:0 0 0 1px rgba(124,92,255,.10), 0 0 26px rgba(124,92,255,.22);
+  filter:saturate(1.15) brightness(1.05);
+}
+header button.hdrBtn:hover::before{ opacity:1; }
+header button.hdrBtn:hover::after{
+  opacity:.55;
+  animation:btnSheen .7s ease;
+}
+@keyframes btnSheen{
+  0%{ transform:translateX(-140%); }
+  100%{ transform:translateX(140%); }
+}
+header button.hdrBtn:active{
+  transform:translateY(0px) scale(.985);
+  filter:brightness(1.08);
+}
+
+/* Glitch pulse (applied via JS occasionally) */
+header button.hdrBtn.glitch{
+  animation:glitchJolt .24s steps(2,end) 1;
+}
+header button.hdrBtn.glitch .lbl{
+  position:relative;
+}
+header button.hdrBtn.glitch .lbl::before,
+header button.hdrBtn.glitch .lbl::after{
+  content:attr(data-txt);
+  position:absolute;
+  left:0; top:0;
+  opacity:.65;
+  pointer-events:none;
+}
+header button.hdrBtn.glitch .lbl::before{
+  transform:translate(1px,-1px);
+  color:rgba(45,212,191,.9);
+  clip-path:inset(0 0 55% 0);
+}
+header button.hdrBtn.glitch .lbl::after{
+  transform:translate(-1px,1px);
+  color:rgba(255,80,120,.9);
+  clip-path:inset(55% 0 0 0);
+}
+@keyframes glitchJolt{
+  0%{ transform:translateY(-1px) skewX(0deg); }
+  50%{ transform:translateY(-1px) skewX(6deg); }
+  100%{ transform:translateY(-1px) skewX(0deg); }
+}
+
+/* Keep existing active styling, but apply to hdrBtn too */
+header button.active,
+header button.hdrBtn.active{
+  background:rgba(124,92,255,.40);
+  box-shadow:0 0 18px rgba(124,92,255,.35);
+  border-color:rgba(124,92,255,.45);
+}
+/* ===== end v3-5 header fx ===== */
 
 #stage{
   position:fixed;
@@ -145,7 +300,6 @@ header button.active{
   user-select:none;
 }
 
-
 /* HUD */
 .hudAction,.hudInfo{
   position:absolute;
@@ -230,14 +384,12 @@ header button.active{
 <body>
 
 <header>
-<button id="btnDeck">MAZO</button>
-<button id="btnDraw">SACAR UNA</button>
-<button id="btnDeal">REPARTIR</button>
-<button id="btnMove">MOVER</button>
-<button id="btnFrame">ENCUADRAR</button>
-<button id="btnLoad">CARGAR</button>
+<button id="btnDeck" class="hdrBtn"><span class="ico" aria-hidden="true">🂠</span><span class="lbl">MAZO</span></button>
+<button id="btnDraw" class="hdrBtn"><span class="ico" aria-hidden="true">🎴</span><span class="lbl">SACAR UNA</span></button>
+<button id="btnDeal" class="hdrBtn"><span class="ico" aria-hidden="true">🃏</span><span class="lbl">REPARTIR</span></button>
+<button id="btnMove" class="hdrBtn"><span class="ico" aria-hidden="true">🌀</span><span class="lbl">MOVER</span></button>
+<button id="btnFrame" class="hdrBtn"><span class="ico" aria-hidden="true">🎯</span><span class="lbl">ENCUADRAR</span></button>
 <div id="total">TOTAL: 0</div>
-<input type="file" id="fileInput" accept="application/json" style="display:none">
 </header>
 
 <div id="stage">
@@ -250,14 +402,12 @@ header button.active{
 const viewport = document.getElementById("viewport");
 const stage = document.getElementById("stage");
 const totalEl = document.getElementById("total");
-const fileInput = document.getElementById("fileInput");
 
 const btnDeck  = document.getElementById("btnDeck");
 const btnDraw  = document.getElementById("btnDraw");
 const btnDeal  = document.getElementById("btnDeal");
 const btnMove  = document.getElementById("btnMove");
 const btnFrame = document.getElementById("btnFrame");
-const btnLoad  = document.getElementById("btnLoad");
 
 let pieces = [];
 let selectedPiece = null;
@@ -424,7 +574,6 @@ function createPiece(meta){
     }
   });
 
-
   return p;
 }
 
@@ -445,11 +594,6 @@ function loadManifest(data){
 
 fetch("manifest/manifest.json", {cache:"no-store"}).then(r=>r.json()).then(loadManifest).catch(()=>{});
 
-btnLoad.addEventListener("click", ()=> fileInput.click());
-fileInput.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
   reader.onload = ev => {
     try{ loadManifest(JSON.parse(ev.target.result)); }
     catch(err){ alert("Manifest inválido"); }
@@ -588,6 +732,23 @@ function tick(){
 }
 tick();
 updateView();
+
+/* ===== v3-5: header micro-animations ===== */
+document.querySelectorAll("header .hdrBtn .lbl").forEach(l => {
+  l.setAttribute("data-txt", l.textContent.trim());
+});
+
+(function headerGlitchLoop(){
+  const btns = Array.from(document.querySelectorAll("header .hdrBtn"));
+  if(!btns.length) return;
+  setInterval(() => {
+    const b = btns[(Math.random()*btns.length)|0];
+    b.classList.add("glitch");
+    setTimeout(()=>b.classList.remove("glitch"), 260);
+  }, 4200);
+})();
+/* ===== end v3-5 ===== */
+
 </script>
 
 </body>
