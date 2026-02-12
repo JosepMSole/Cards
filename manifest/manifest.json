@@ -1,0 +1,71 @@
+{
+  "version": "v25",
+  "exportedAt": "2026-02-12T00:18:16.313Z",
+  "cards": [
+    {
+      "num": "#001",
+      "front": "MISTERY CARD - 002.jpg",
+      "back": "002 - Caracteres - v5.jpg",
+      "hud": "002 - FRAME 3.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 67,
+        "scale": 1
+      },
+      "hudText": "Jason Peters despierta sentado en un extraño dispositivo... ¿porqué está ahí?",
+      "url": "https://example.com"
+    },
+    {
+      "num": "#002",
+      "front": "MISTERY CARD - 004.jpg",
+      "back": "004 - DARK LIMITS Momento Zero - v5.jpg",
+      "hud": "004 - FRAME 3.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 0,
+        "scale": 1
+      },
+      "hudText": "Hace pocos días, ocurrió un incidente sorprendente en la ciudad, que nos relata la joven Susan Waters...",
+      "url": "https://example.com"
+    },
+    {
+      "num": "#003",
+      "front": "MISTERY CARD - 010.jpg",
+      "back": "010 - Un Cuento de Navidad Disonante - v2.jpg",
+      "hud": "010 - FRAME 1.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 0,
+        "scale": 1
+      },
+      "hudText": "Llega la Navidad....esa maravillosa época del año donde los sueños se hacen realidad…",
+      "url": "https://example.com"
+    },
+    {
+      "num": "#004",
+      "front": "MISTERY CARD - 012.jpg",
+      "back": "012 - Icarus Starflight - v4.jpg",
+      "hud": "012 - FRAME 1.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 0,
+        "scale": 1
+      },
+      "hudText": "Acompaña al coronel James Cunningham en un vuelo de prueba con los nuevos motores Icarus...",
+      "url": "https://example.com"
+    },
+    {
+      "num": "#005",
+      "front": "MISTERY CARD - 014.jpg",
+      "back": "014 - Selena - v6.jpg",
+      "hud": "014 - FRAME 1.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 0,
+        "scale": 1
+      },
+      "hudText": "Año 2486. Colonia 35. Luna Xena.",
+      "url": "https://example.com"
+    }
+  ]
+}

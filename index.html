@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Deck v2-24</title>
+
+<style>
+:root{
+  --cardW:175px;
+  --cardH:246px;
+  --headerH:90px;
+  --hudDur:.5s;
+}
+html,body{
+  margin:0;
+  height:100%;
+  overflow:hidden;
+  background:#070b18;
+  font-family:system-ui;
+  color:white;
+}
+header{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:var(--headerH);
+  background:black;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  z-index:1000;
+}
+header button{
+  padding:10px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.08);
+  color:white;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+}
+header button.active{
+  background:rgba(124,92,255,.4);
+  box-shadow:0 0 18px rgba(124,92,255,.35);
+}
+#total{
+  padding:10px 14px;
+  border-radius:14px;
+  background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.2);
+  font-weight:900;
+}
+
+#stage{
+  position:fixed;
+  inset:var(--headerH) 0 0 0;
+  overflow:hidden;
+  touch-action:none;
+  cursor:grab;
+}
+#stage.panning{ cursor:grabbing; }
+
+#viewport{
+  position:absolute;
+  inset:0;
+  transform-origin:0 0;
+  will-change:transform;
+}
+
+#bg{
+  position:absolute;
+  inset:0;
+  background:url("images/bg.jpg") center/cover no-repeat;
+}
+
+/* CARD */
+.piece{
+  position:absolute;
+  width:var(--cardW);
+  height:var(--cardH);
+  perspective:1200px;
+  -webkit-perspective:1200px;
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+  touch-action:none;
+}
+
+.card{
+  position:absolute;
+  inset:0;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 14px 40px rgba(0,0,0,.6);
+
+  background: transparent;z-index:2;
+
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+  will-change:transform;
+}
+
+/* Each face rotates, not the parent (more reliable across browsers). */
+.face{
+  position:absolute;
+  inset:0;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+
+  transition:transform .45s cubic-bezier(.2,.7,.2,1);
+  will-change:transform;
+
+  /* micro translateZ helps avoid front "bleeding" through on some GPUs */
+  transform:translateZ(0.5px);
+
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+
+  image-rendering:auto;
+}
+
+.front{ transform:rotateY(0deg) translateZ(0.5px); }
+.back { transform:rotateY(180deg) translateZ(0.5px); background-color:#111; }
+
+.card.flipped .front{ transform:rotateY(-180deg) translateZ(0.5px); }
+.card.flipped .back { transform:rotateY(0deg) translateZ(0.5px); }
+
+/* Flip button: always top-right, regardless of face */
+.flipBtn{
+  position:absolute;
+  top:8px; right:8px;
+  width:40px;height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(0,0,0,.4);
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  z-index:6;
+  user-select:none;
+}
+
+
+/* HUD */
+.hudAction,.hudInfo{
+  position:absolute;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(15,23,48,.95);
+  box-shadow:0 12px 34px rgba(0,0,0,.6);
+  opacity:0;
+  transition:opacity var(--hudDur) ease, transform var(--hudDur) cubic-bezier(.2,.7,.2,1);
+  pointer-events:auto;
+  z-index:1;
+}
+.hudAction{
+  width:140px;height:120px;
+  left:-140px;
+  top:calc((var(--cardH) - 120px)/2);
+  display:flex;align-items:center;justify-content:center;
+  transform:translateX(40px);
+}
+.hudInfo{
+  min-width:200px;
+  max-width:280px;
+  left:var(--cardW);
+  top:0;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  transform:translateX(-40px);
+}
+.piece.hudOpen .hudAction,
+.piece.hudOpen .hudInfo{
+  opacity:1;
+  transform:translateX(0);
+}
+.irBtn{
+  width:66px;height:66px;border-radius:18px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(45,212,191,.3);
+  color:#fff;font-weight:1000;cursor:pointer;
+}
+.infoThumb{
+  width:100%;
+  aspect-ratio:16/9;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
+  background-color: rgba(255,255,255,.06);
+}
+.infoText{
+  font-size:13px;
+  white-space:pre-wrap;
+  line-height:1.25;
+}
+
+/* Flash */
+@keyframes wildFlash{
+  0%{ filter:brightness(1) contrast(1); transform:scale(1); }
+  20%{ filter:brightness(3) contrast(2.4) saturate(1.6); transform:scale(1.08) rotate(-3deg); }
+  50%{ transform:scale(1.05) rotate(3deg); }
+  100%{ filter:brightness(1) contrast(1); transform:scale(1); }
+}
+.piece.flash .card,
+.piece.flash .hudAction,
+.piece.flash .hudInfo{ animation:wildFlash .2s ease; }
+
+/* Hide card shadow during flip to avoid static shadow plane */
+.piece.flipping .card{ box-shadow:none !important; }
+
+/* Selected glow (only on front-click) */
+.piece.selected .card{
+  box-shadow:
+    0 14px 40px rgba(0,0,0,.6),
+    0 0 0 2px rgba(124,92,255,.55),
+    0 0 28px rgba(124,92,255,.55),
+    0 0 58px rgba(124,92,255,.35);
+}
+</style>
+</head>
+<body>
+
+<header>
+<button id="btnDeck">MAZO</button>
+<button id="btnDraw">SACAR UNA</button>
+<button id="btnDeal">REPARTIR</button>
+<button id="btnMove">MOVER</button>
+<button id="btnFrame">ENCUADRAR</button>
+<button id="btnLoad">CARGAR</button>
+<div id="total">TOTAL: 0</div>
+<input type="file" id="fileInput" accept="application/json" style="display:none">
+</header>
+
+<div id="stage">
+  <div id="viewport">
+    <div id="bg"></div>
+  </div>
+</div>
+
+<script>
+const viewport = document.getElementById("viewport");
+const stage = document.getElementById("stage");
+const totalEl = document.getElementById("total");
+const fileInput = document.getElementById("fileInput");
+
+const btnDeck  = document.getElementById("btnDeck");
+const btnDraw  = document.getElementById("btnDraw");
+const btnDeal  = document.getElementById("btnDeal");
+const btnMove  = document.getElementById("btnMove");
+const btnFrame = document.getElementById("btnFrame");
+const btnLoad  = document.getElementById("btnLoad");
+
+let pieces = [];
+let selectedPiece = null;
+let scale = 1, panX = 0, panY = 0;
+let minScale = 1;          // zoom-out lock
+let moverOn = false;
+let zTop = 10;
+
+function clampPan(){
+  const rect = stage.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  const minPanX = w - w * scale;
+  const minPanY = h - h * scale;
+  panX = Math.min(0, Math.max(minPanX, panX));
+  panY = Math.min(0, Math.max(minPanY, panY));
+}
+
+function updateView(){
+  clampPan();
+  viewport.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+}
+
+function clearSelection(){
+  if(selectedPiece){
+    selectedPiece.el.classList.remove("selected");
+    selectedPiece = null;
+  }
+}
+
+function closeAllHUD(){
+  pieces.forEach(p => p.el.classList.remove("hudOpen"));
+}
+
+/* CREATE CARD */
+function createPiece(meta){
+  const el = document.createElement("div");
+  el.className = "piece";
+  el.style.zIndex = ++zTop;
+
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const front = document.createElement("div");
+  front.className = "face front";
+  if(meta.front){
+    const u = encodeURI("images/" + meta.front);
+    front.style.backgroundImage = `url("${u}")`;
+  }
+
+  const back = document.createElement("div");
+  back.className = "face back";
+  if(meta.back){
+    const u = encodeURI("images/" + meta.back);
+    back.style.backgroundImage = `url("${u}")`;
+  }
+
+  // Flip button is duplicated: one on FRONT and one on BACK so it always sits top-right
+  // and rotates with the visible face (no "plane staying still" during flip).
+  const mkFlipBtn = () => {
+    const b = document.createElement("button");
+    b.className = "flipBtn";
+    b.textContent = "↻";
+    b.addEventListener("pointerdown", e => { e.stopPropagation(); });
+    b.addEventListener("click", e => { e.stopPropagation(); el.classList.add("flipping"); card.classList.toggle("flipped"); closeAllHUD(); setTimeout(()=>el.classList.remove("flipping"), 520); });
+    return b;
+  };
+  front.appendChild(mkFlipBtn());
+  back.appendChild(mkFlipBtn());
+
+  card.append(front, back);
+
+  const hudA = document.createElement("div");
+  hudA.className = "hudAction";
+  const ir = document.createElement("button");
+  ir.className = "irBtn";
+  ir.textContent = "IR";
+  ir.addEventListener("pointerdown", e => e.stopPropagation());
+  ir.addEventListener("click", e => {
+    e.stopPropagation();
+    if(meta.url) window.open(meta.url, "_blank", "noopener,noreferrer");
+  });
+  hudA.appendChild(ir);
+
+  const hudI = document.createElement("div");
+  hudI.className = "hudInfo";
+  if(meta.hud){
+    const thumb = document.createElement("div");
+    thumb.className = "infoThumb";
+    thumb.style.backgroundImage = `url("images/${meta.hud}")`;
+    hudI.appendChild(thumb);
+  }
+  if(meta.hudText){
+    const text = document.createElement("div");
+    text.className = "infoText";
+    text.textContent = meta.hudText;
+    hudI.appendChild(text);
+  }
+
+  el.append(card, hudA, hudI);
+  viewport.appendChild(el);
+
+  const p = {
+    el, card,
+    x: Number(meta.x || 0),
+    y: Number(meta.y || 0),
+    tx: Number(meta.x || 0),
+    ty: Number(meta.y || 0),
+    phase: Math.random()*Math.PI*2,
+    dragging: false,
+    moved: 0,
+    suppressClickUntil: 0
+  };
+  pieces.push(p);
+
+  /* DRAG: do NOT open HUDs */
+  el.addEventListener("pointerdown", e => {
+    if(e.target.closest(".flipBtn") || e.target.closest(".irBtn")) return;
+    p.dragging = true;
+    p.moved = 0;
+    p.startX = e.clientX;
+    p.startY = e.clientY;
+    p.baseX = p.tx;
+    p.baseY = p.ty;
+    el.setPointerCapture(e.pointerId);
+    el.style.zIndex = ++zTop;
+  });
+  el.addEventListener("pointermove", e => {
+    if(!p.dragging) return;
+    const dx = (e.clientX - p.startX) / scale;
+    const dy = (e.clientY - p.startY) / scale;
+    p.moved = Math.max(p.moved, Math.abs(dx)+Math.abs(dy));
+    p.tx = p.baseX + dx;
+    p.ty = p.baseY + dy;
+  });
+  el.addEventListener("pointerup", () => {
+    if(!p.dragging) return;
+    p.dragging = false;
+    if(p.moved > 6){
+      p.suppressClickUntil = performance.now() + 250;
+    }
+  });
+
+    /* CLICK toggles HUDs (only if not dragged) */
+  el.addEventListener("click", e => {
+    if(e.target.closest(".flipBtn") || e.target.closest(".irBtn")) return;
+    if(performance.now() < p.suppressClickUntil) return;
+
+    // SOLO FRONTAL: no seleccionar/abrir HUD si estamos viendo el BACK
+    if(card.classList.contains("flipped")) return;
+
+    const willOpen = !el.classList.contains("hudOpen");
+    closeAllHUD();
+
+    // Glow de selección
+    if(selectedPiece && selectedPiece !== p) selectedPiece.el.classList.remove("selected");
+    selectedPiece = p;
+    el.classList.add("selected");
+
+    if(willOpen){
+      el.classList.add("flash");
+      setTimeout(()=>el.classList.remove("flash"), 210);
+      el.classList.add("hudOpen");
+    }
+  });
+
+
+  return p;
+}
+
+/* LOAD MANIFEST */
+function loadManifest(data){
+  viewport.querySelectorAll(".piece").forEach(e => e.remove());
+  pieces = [];
+  zTop = 10;
+  clearSelection();
+  if(!data || !Array.isArray(data.cards)){
+    alert("Manifest inválido");
+    return;
+  }
+  data.cards.forEach(createPiece);
+  totalEl.textContent = "TOTAL: " + data.cards.length;
+  stackCenter();
+}
+
+fetch("manifest/manifest.json", {cache:"no-store"}).then(r=>r.json()).then(loadManifest).catch(()=>{});
+
+btnLoad.addEventListener("click", ()=> fileInput.click());
+fileInput.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try{ loadManifest(JSON.parse(ev.target.result)); }
+    catch(err){ alert("Manifest inválido"); }
+  };
+  reader.readAsText(file);
+});
+
+/* HEADER BUTTONS */
+function stackCenter(){
+  if(!pieces.length) return;
+  closeAllHUD();
+  clearSelection();
+  closeAllHUD();
+  const rect = stage.getBoundingClientRect();
+  const cx = (rect.width/2) - (175/2);
+  const cy = (rect.height/2) - (246/2);
+  pieces.forEach((p,i)=>{
+    p.tx = cx;
+    p.ty = cy;
+    p.el.style.zIndex = i+1;
+  });
+  zTop = pieces.length + 5;
+  scale = 1;
+  panX = 0;
+  panY = 0;
+  minScale = 1;
+  updateView();
+}
+
+function dealRandom(){
+  if(!pieces.length) return;
+  closeAllHUD();
+  clearSelection();
+  closeAllHUD();
+  const rect = stage.getBoundingClientRect();
+  const maxX = Math.max(0, rect.width/scale - 175 - 12);
+  const maxY = Math.max(0, rect.height/scale - 246 - 12);
+  pieces.forEach(p=>{
+    p.tx = 6 + Math.random()*maxX;
+    p.ty = 6 + Math.random()*maxY;
+    p.el.style.zIndex = ++zTop;
+  });
+}
+
+function drawOne(){
+  if(!pieces.length) return;
+  closeAllHUD();
+  clearSelection();
+  closeAllHUD();
+  const p = pieces[Math.floor(Math.random()*pieces.length)];
+  p.el.style.zIndex = ++zTop;
+  p.tx += 18;
+  p.ty += 18;
+  p.el.classList.add("flash");
+  setTimeout(()=>p.el.classList.remove("flash"), 210);
+}
+
+btnDeck.addEventListener("click", stackCenter);
+btnDeal.addEventListener("click", dealRandom);
+btnDraw.addEventListener("click", drawOne);
+btnMove.addEventListener("click", () => {
+  moverOn = !moverOn;
+  btnMove.classList.toggle("active", moverOn);
+});
+btnFrame.addEventListener("click", () => {
+  closeAllHUD();
+  clearSelection();
+  scale = minScale;
+  panX = 0;
+  panY = 0;
+  updateView();
+});
+
+/* CLICK OUTSIDE closes HUDs */
+document.addEventListener("pointerdown", (e)=>{
+  if(e.target.closest("header")) return;
+  if(e.target.closest(".piece")) return;
+  closeAllHUD();
+  clearSelection();
+}, {capture:true});
+
+/* PAN (clamped to BG) */
+let panning=false, psx=0, psy=0, basePanX=0, basePanY=0, pid=null;
+stage.addEventListener("pointerdown", e=>{
+  if(e.target.closest(".piece")) return;
+  panning=true;
+  stage.classList.add("panning");
+  psx = e.clientX; psy = e.clientY;
+  basePanX = panX; basePanY = panY;
+  pid = e.pointerId;
+});
+window.addEventListener("pointermove", e=>{
+  if(!panning || e.pointerId!==pid) return;
+  panX = basePanX + (e.clientX-psx);
+  panY = basePanY + (e.clientY-psy);
+  updateView();
+});
+window.addEventListener("pointerup", e=>{
+  if(e.pointerId!==pid) return;
+  panning=false;
+  stage.classList.remove("panning");
+});
+
+/* ZOOM to cursor (locked minScale) */
+stage.addEventListener("wheel", e=>{
+  e.preventDefault();
+  const rect = stage.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const worldX = (mx - panX) / scale;
+  const worldY = (my - panY) / scale;
+
+  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  const newScale = Math.max(minScale, Math.min(2.5, scale*factor));
+
+  panX = mx - worldX * newScale;
+  panY = my - worldY * newScale;
+  scale = newScale;
+  updateView();
+},{passive:false});
+
+/* LOOP */
+function tick(){
+  const t = performance.now()*0.002;
+  for(const p of pieces){
+    if(moverOn && !p.dragging){
+      p.tx += Math.sin(t + p.phase) * 0.35;
+      p.ty += Math.cos(t*0.9 + p.phase*1.3) * 0.35;
+    }
+    p.x += (p.tx - p.x) * 0.15;
+    p.y += (p.ty - p.y) * 0.15;
+    p.el.style.transform = `translate(${p.x}px,${p.y}px)`;
+  }
+  requestAnimationFrame(tick);
+}
+tick();
+updateView();
+</script>
+
+</body>
+</html>
