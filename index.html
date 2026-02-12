@@ -199,7 +199,6 @@ header button.hdrBtn.glitch .lbl::after{
   100%{ transform:translateY(-1px) skewX(0deg); }
 }
 
-/* Keep existing active styling, but apply to hdrBtn too */
 header button.active,
 header button.hdrBtn.active{
   background:rgba(124,92,255,.40);
@@ -593,13 +592,6 @@ function loadManifest(data){
 }
 
 fetch("manifest/manifest.json", {cache:"no-store"}).then(r=>r.json()).then(loadManifest).catch(()=>{});
-
-  reader.onload = ev => {
-    try{ loadManifest(JSON.parse(ev.target.result)); }
-    catch(err){ alert("Manifest inválido"); }
-  };
-  reader.readAsText(file);
-});
 
 /* HEADER BUTTONS */
 function stackCenter(){
