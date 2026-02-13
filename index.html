@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-6</title>
+<title>DECK 6-7</title>
 
 <style>
 :root{
@@ -697,6 +697,40 @@ header button.hdrBtn.active{
 }
 /* ===== end v6-6 ===== */
 
+
+/* ===== v6-7 MOBILE ZONES 4/5 + zone buttons ===== */
+@media (max-width:768px){
+  #zoneCenter{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+  .zoneHUD{
+    width:calc(var(--cardW) * 2.05);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(15,23,48,.86);
+    box-shadow:0 12px 34px rgba(0,0,0,.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px;
+    pointer-events:auto;
+  }
+  #zone4IR{ height:58px; }
+  #zone5INFO{
+    min-height:86px;
+    max-height:160px;
+    overflow:hidden;
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:flex-start;
+    gap:8px;
+  }
+  #zoneRight .zoneLabel{ cursor:pointer; user-select:none; pointer-events:auto; }
+  #zoneRight .zoneLabel:active{ transform:scale(.985); }
+  .piece.selected .card{ box-shadow:0 14px 40px rgba(0,0,0,.6) !important; }
+}
+/* ===== end v6-7 ===== */
+
 </style>
 </head>
 <body>
@@ -717,18 +751,23 @@ header button.hdrBtn.active{
     <div id="bg"></div>
 
 <div id="mobileBoard" aria-hidden="true">
-  <div id="zone1Slot" class="slot slotDeck"></div>
+  <div id="zoneCenter">
+    <div id="zone4IR" class="zoneHUD zoneHUDTop"></div>
+    <div id="zone1Slot" class="slot slotDeck"></div>
+    <div id="zone5INFO" class="zoneHUD zoneHUDBot">
+      <div class="infoThumb" id="z5Thumb" style="display:none"></div>
+      <div class="infoText" id="z5Text" style="display:none"></div>
+    </div>
+  </div>
 
   <div id="zoneRight">
-    <div id="zoneReadWrap" class="zoneWrap">
-      <div class="zoneLabel zoneLabelRead">LEÍDAS</div>
-      <div id="zoneReadSlot" class="slot slotRead"></div>
-    </div>
+    <button id="btnZoneRead" class="zoneLabel zoneLabelRead" type="button">LEÍDAS</button>
+    <div id="zoneReadSlot" class="slot slotRead"></div>
 
-    <div id="zonePendingWrap" class="zoneWrap">
-      <div id="zonePendingSlot" class="slot slotPending"></div>
-      <div class="zoneLabel zoneLabelPending">PENDIENTES</div>
-    </div>
+    <div style="height:18px"></div>
+
+    <button id="btnZonePending" class="zoneLabel zoneLabelPending" type="button">PENDIENTES</button>
+    <div id="zonePendingSlot" class="slot slotPending"></div>
   </div>
 </div>
 
@@ -839,7 +878,7 @@ function layoutMobileZones(){
       // placed cards should be normal scale, no glow
       p.ts = 1;
       p.previewed = true; // already "seen"
-      p.el.classList.remove('lit');
+      
       p.el.classList.remove('hudOpen');
     });
   };
@@ -909,7 +948,71 @@ function normalizeZone1Stack(){
 function closeHUDsMobile(){
   closeAllHUD();
   clearSelection();
+  if(isMobile) clearHudZones();
 }
+
+/* ===== v6-7 HUD zones (Zone4 IR + Zone5 INFO) ===== */
+let activePiece = null;
+
+function clearHudZones(){
+  const z4 = document.getElementById("zone4IR");
+  const t = document.getElementById("z5Text");
+  const th = document.getElementById("z5Thumb");
+  if(z4) z4.innerHTML = "";
+  if(t){ t.textContent=""; t.style.display="none"; }
+  if(th){ th.style.backgroundImage=""; th.style.display="none"; }
+  activePiece = null;
+}
+
+function showHudZonesFor(p){
+  if(!isMobile) return;
+  activePiece = p;
+  const z4 = document.getElementById("zone4IR");
+  const t = document.getElementById("z5Text");
+  const th = document.getElementById("z5Thumb");
+  if(!z4 || !t || !th) return;
+
+  z4.innerHTML = "";
+  if(p?.meta?.url){
+    const b = document.createElement("button");
+    b.className = "irBtn";
+    b.textContent = "IR";
+    b.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      window.open(p.meta.url, "_blank", "noopener,noreferrer");
+    });
+    z4.appendChild(b);
+  }
+
+  if(p?.meta?.hud){
+    th.style.display = "block";
+    th.style.backgroundImage = `url("images/${p.meta.hud}")`;
+    const c = p.meta.hudCrop;
+    if(c && typeof c === "object"){
+      const sc = Number(c.scale || 1);
+      const ox = Number(c.x || 0);
+      const oy = Number(c.y || 0);
+      th.style.backgroundSize = `${Math.max(0.1, sc) * 100}%`;
+      th.style.backgroundPosition = `calc(50% + ${ox}px) calc(50% + ${oy}px)`;
+      th.style.backgroundRepeat = "no-repeat";
+    }else{
+      th.style.backgroundSize = "cover";
+      th.style.backgroundPosition = "center";
+      th.style.backgroundRepeat = "no-repeat";
+    }
+  }else{
+    th.style.display = "none";
+  }
+
+  if(p?.meta?.hudText){
+    t.style.display = "block";
+    t.textContent = p.meta.hudText;
+  }else{
+    t.style.display = "none";
+    t.textContent = "";
+  }
+}
+/* ===== end v6-7 HUD zones ===== */
 /* ===== end v6-6 ===== */
 
 
@@ -1066,6 +1169,7 @@ function createPiece(meta){
 
   const p = {
     el, card,
+    meta,
     x: Number(meta.x || 0),
     y: Number(meta.y || 0),
     tx: Number(meta.x || 0),
@@ -1120,8 +1224,9 @@ function createPiece(meta){
       if(ok){
         // snap success
         p.ts = 1;
-        p.el.classList.remove('lit');
+        
         p.el.classList.remove('hudOpen');
+        clearHudZones();
         closeHUDsMobile();
         normalizeZone1Stack();
       }else{
@@ -1143,6 +1248,25 @@ function createPiece(meta){
     // SOLO FRONTAL: no seleccionar/abrir HUD si estamos viendo el BACK
     if(card.classList.contains("flipped")) return;
 
+    // v6-7 click sequence (mobile): 1st click preview (x1.5), 2nd click HUD zones
+    if(isMobile){
+      const z = mobileZone.get(p)||"z1";
+      if(z==="z1"){
+        if(!isTopCard(p)) return;
+        if(!p.previewed){
+          closeHUDsMobile();
+          p.previewed = true;
+          p.ts = 1.5;
+          p.el.style.zIndex = String(++zTop);
+          clearHudZones();
+          return;
+        }
+        // second click -> show HUD zones
+        showHudZonesFor(p);
+        return;
+      }
+    }
+
     // v6-6 click sequence (mobile): 1st click preview (x3 + glow), 2nd click HUDs
     if(isMobile){
       const z = mobileZone.get(p)||'z1';
@@ -1151,8 +1275,8 @@ function createPiece(meta){
         if(!p.previewed){
           closeHUDsMobile();
           p.previewed = true;
-          p.ts = 3;
-          p.el.classList.add('lit');
+          p.ts = 1.5;
+          
           p.el.style.zIndex = String(++zTop);
           return;
         }
@@ -1174,10 +1298,12 @@ function createPiece(meta){
     const willOpen = !el.classList.contains("hudOpen");
     closeAllHUD();
 
-    // Glow de selección
-    if(selectedPiece && selectedPiece !== p) selectedPiece.el.classList.remove("selected");
-    selectedPiece = p;
-    el.classList.add("selected");
+    // Glow de selección (desktop only)
+    if(!isMobile){
+      if(selectedPiece && selectedPiece !== p) selectedPiece.el.classList.remove("selected");
+      selectedPiece = p;
+      el.classList.add("selected");
+    }
 
     if(willOpen){
       el.classList.add("flash");
@@ -1216,7 +1342,7 @@ function stackCenter(){
 
   if(isMobile){
     zRead=[]; zPending=[];
-    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
+    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1;  p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
     zTop = 10 + pieces.length + 10;
     syncCounts();
     scale=1; panX=0; panY=0;
@@ -1255,7 +1381,7 @@ function dealRandom(){
 
   if(isMobile){
     zRead=[]; zPending=[];
-    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
+    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1;  p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
     zTop = 10 + pieces.length + 10;
     syncCounts();
     scale=1; panX=0; panY=0;
@@ -1282,8 +1408,8 @@ function drawOne(){
     // behave like first click: preview card (x3 + glow)
     closeHUDsMobile();
     p.previewed = true;
-    p.ts = 3;
-    p.el.classList.add('lit');
+    p.ts = 1.5;
+    
     p.el.style.zIndex = String(++zTop);
     return;
   }
@@ -1314,13 +1440,49 @@ btnMove.addEventListener("click", () => {
   moverOn = !moverOn;
   btnMove.classList.toggle("active", moverOn);
 });
+
+/* ===== v6-7 mobile zone buttons: send current card ===== */
+function sendTopTo(zone){
+  if(!isMobile) return;
+  const p = activePiece || deckTop();
+  if(!p) return;
+  if((mobileZone.get(p)||'z1')!=='z1') return;
+  if(!isTopCard(p)) return;
+  if(!p.previewed) return;
+
+  if(zone === 'read'){
+    zPending = zPending.filter(x=>x!==p);
+    if(!zRead.includes(p)) zRead.push(p);
+    setZone(p,'read');
+  }else{
+    zRead = zRead.filter(x=>x!==p);
+    if(!zPending.includes(p)) zPending.push(p);
+    setZone(p,'pending');
+  }
+  syncCounts();
+  p.ts = 1;
+  clearHudZones();
+  closeHUDsMobile();
+  layoutMobileZones();
+  normalizeZone1Stack();
+}
+
+document.addEventListener('click', (e)=>{
+  if(!isMobile) return;
+  const br = document.getElementById('btnZoneRead');
+  const bp = document.getElementById('btnZonePending');
+  if(br && e.target === br){ e.stopPropagation(); sendTopTo('read'); }
+  if(bp && e.target === bp){ e.stopPropagation(); sendTopTo('pending'); }
+}, true);
+/* ===== end v6-7 zone buttons ===== */
+
 btnFrame.addEventListener("click", () => {
   closeAllHUD();
   clearSelection();
 
   if(isMobile){
     zRead=[]; zPending=[];
-    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
+    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1;  p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
     zTop = 10 + pieces.length + 10;
     syncCounts();
     scale=1; panX=0; panY=0;
@@ -1342,7 +1504,8 @@ document.addEventListener("pointerdown", (e)=>{
   closeAllHUD();
   clearSelection();
   if(isMobile){
-    // v6-6: outside click only hides HUDs (does not reset zones)
+    // v6-7: outside click hides HUD zones
+    clearHudZones();
     return;
   }
 }, {capture:true});
