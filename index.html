@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 5-3</title>
+<title>DECK 6-1</title>
 
 <style>
 :root{
@@ -597,6 +597,41 @@ const btnFrame = document.getElementById("btnFrame");
 const isMobile = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
 let maxScale = isMobile ? 5.0 : 2.5;
 
+/* ===== v6-1 MOBILE: Snap-to-grid (desktop-like icon placement) ===== */
+const gridSnapOnMobile = true;      // only applies on mobile
+const gridGapMobile = 6;            // gap between grid cells in world units (px at scale=1)
+
+function getCardSize(){
+  const cs = getComputedStyle(document.documentElement);
+  const cardW = parseFloat(cs.getPropertyValue("--cardW")) || 175;
+  const cardH = parseFloat(cs.getPropertyValue("--cardH")) || 246;
+  return {cardW, cardH};
+}
+function getGridStep(){
+  const {cardW, cardH} = getCardSize();
+  // Step is card size + small gap so cards naturally align in tidy rows/cols.
+  return {gx: cardW + gridGapMobile, gy: cardH + gridGapMobile, cardW, cardH};
+}
+function clamp(v, lo, hi){ return Math.min(hi, Math.max(lo, v)); }
+
+function snapToGrid(p){
+  if(!(isMobile && gridSnapOnMobile)) return;
+  const rect = stage.getBoundingClientRect();
+  const {gx, gy, cardW, cardH} = getGridStep();
+
+  // keep within stage bounds in world space (so you don't "lose" cards off-screen)
+  const maxX = Math.max(0, rect.width/scale - cardW);
+  const maxY = Math.max(0, rect.height/scale - cardH);
+
+  let nx = Math.round(p.tx / gx) * gx;
+  let ny = Math.round(p.ty / gy) * gy;
+
+  p.tx = clamp(nx, 0, maxX);
+  p.ty = clamp(ny, 0, maxY);
+}
+/* ===== end v6-1 MOBILE snap ===== */
+
+
 let pieces = [];
 let selectedPiece = null;
 let scale = 1, panX = 0, panY = 0;
@@ -781,6 +816,7 @@ function createPiece(meta){
   el.addEventListener("pointerup", () => {
     if(!p.dragging) return;
     p.dragging = false;
+    snapToGrid(p);
     if(p.moved > 6){
       p.suppressClickUntil = performance.now() + 250;
     }
