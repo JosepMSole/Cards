@@ -1,0 +1,2327 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DECK 6-15</title>
+
+<style>
+:root{
+  --cardW:175px;
+  --cardH:246px;
+  --headerH:90px;
+  --hudDur:.5s;
+}
+html,body{
+  margin:0;
+  height:100%;
+  overflow:hidden;
+  background:#070b18;
+  font-family:system-ui;
+  color:white;
+}
+header{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:var(--headerH);
+  background:black;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  z-index:1000;
+}
+header button{
+  padding:10px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.08);
+  color:white;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+}
+header button.active{
+  background:rgba(124,92,255,.4);
+  box-shadow:0 0 18px rgba(124,92,255,.35);
+}
+#total{
+  padding:10px 14px;
+  border-radius:14px;
+  background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.2);
+  font-weight:900;
+}
+#total .num{ font-size:1.35em; font-weight:1000; margin-left:6px; }
+
+/* ===== v3-5 HEADER FX ===== */
+header{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:var(--headerH);
+  background:
+    radial-gradient(1200px 120px at 50% 0%, rgba(124,92,255,.22), transparent 70%),
+    linear-gradient(180deg, rgba(0,0,0,.92), rgba(0,0,0,.78));
+  border-bottom:1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow:hidden;
+}
+header::before{
+  content:"";
+  position:absolute;
+  inset:-40px -60px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255,255,255,.045) 0px,
+      rgba(255,255,255,.045) 1px,
+      transparent 2px,
+      transparent 6px
+    );
+  opacity:.25;
+  mix-blend-mode:overlay;
+  pointer-events:none;
+  animation:scanMove 4.5s linear infinite;
+}
+header::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: radial-gradient(600px 90px at 50% 10%, rgba(45,212,191,.10), transparent 65%);
+  opacity:.8;
+  pointer-events:none;
+}
+@keyframes scanMove{
+  0%{ transform:translateY(0); }
+  100%{ transform:translateY(46px); }
+}
+
+header button.hdrBtn{
+  position:relative;
+  padding:10px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  user-select:none;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  letter-spacing:.4px;
+  text-shadow:0 1px 0 rgba(0,0,0,.55);
+  transform:translateZ(0);
+  transition:
+    transform .12s ease,
+    box-shadow .18s ease,
+    border-color .18s ease,
+    filter .18s ease;
+  isolation:isolate;
+}
+header button.hdrBtn .ico{
+  font-size:18px;
+  line-height:1;
+  filter:drop-shadow(0 0 10px rgba(124,92,255,.25));
+}
+header button.hdrBtn::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:16px;
+  background:
+    radial-gradient(160px 36px at 20% 0%, rgba(45,212,191,.22), transparent 60%),
+    radial-gradient(180px 42px at 80% 100%, rgba(124,92,255,.18), transparent 60%);
+  opacity:.0;
+  transition:opacity .18s ease;
+  pointer-events:none;
+  z-index:-1;
+}
+header button.hdrBtn::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:14px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  transform:translateX(-140%);
+  opacity:.0;
+  pointer-events:none;
+  mix-blend-mode:screen;
+}
+header button.hdrBtn:hover{
+  transform:translateY(-1px);
+  border-color:rgba(124,92,255,.35);
+  box-shadow:0 0 0 1px rgba(124,92,255,.10), 0 0 26px rgba(124,92,255,.22);
+  filter:saturate(1.15) brightness(1.05);
+}
+header button.hdrBtn:hover::before{ opacity:1; }
+header button.hdrBtn:hover::after{
+  opacity:.55;
+  animation:btnSheen .7s ease;
+}
+@keyframes btnSheen{
+  0%{ transform:translateX(-140%); }
+  100%{ transform:translateX(140%); }
+}
+header button.hdrBtn:active{
+  transform:translateY(0px) scale(.985);
+  filter:brightness(1.08);
+}
+
+/* Glitch pulse (applied via JS occasionally) */
+header button.hdrBtn.glitch{
+  animation:glitchJolt .24s steps(2,end) 1;
+}
+header button.hdrBtn.glitch .lbl{
+  position:relative;
+}
+header button.hdrBtn.glitch .lbl::before,
+header button.hdrBtn.glitch .lbl::after{
+  content:attr(data-txt);
+  position:absolute;
+  left:0; top:0;
+  opacity:.65;
+  pointer-events:none;
+}
+header button.hdrBtn.glitch .lbl::before{
+  transform:translate(1px,-1px);
+  color:rgba(45,212,191,.9);
+  clip-path:inset(0 0 55% 0);
+}
+header button.hdrBtn.glitch .lbl::after{
+  transform:translate(-1px,1px);
+  color:rgba(255,80,120,.9);
+  clip-path:inset(55% 0 0 0);
+}
+@keyframes glitchJolt{
+  0%{ transform:translateY(-1px) skewX(0deg); }
+  50%{ transform:translateY(-1px) skewX(6deg); }
+  100%{ transform:translateY(-1px) skewX(0deg); }
+}
+
+header button.active,
+header button.hdrBtn.active{
+  background:rgba(124,92,255,.40);
+  box-shadow:0 0 18px rgba(124,92,255,.35);
+  border-color:rgba(124,92,255,.45);
+}
+/* ===== end v3-5 header fx ===== */
+
+#stage{
+  position:fixed;
+  inset:var(--headerH) 0 0 0;
+  overflow:hidden;
+  touch-action:none;
+  cursor:grab;
+  background:#070b18;
+}
+
+#world{
+  position:absolute;
+  inset:0;
+  transform-origin:0 0;
+  will-change:transform;
+}
+#stage.panning{ cursor:grabbing; }
+
+#viewport{
+  position:absolute;
+  inset:0;
+  transform-origin:0 0;
+  will-change:transform;
+  z-index:5;
+}
+
+#bg{
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+  transform-origin:0 0;
+  will-change:transform;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(1200px 800px at 40% 30%, rgba(124,92,255,.25), transparent 60%),
+    radial-gradient(900px 600px at 70% 60%, rgba(255,202,58,.18), transparent 55%),
+    url("images/bg.jpg") center/cover no-repeat;
+}
+
+/* CARD */
+.piece{
+  position:absolute;
+  z-index:1;
+  width:var(--cardW);
+  height:var(--cardH);
+  perspective:1200px;
+  -webkit-perspective:1200px;
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+  touch-action:none;
+}
+
+.card{
+  position:absolute;
+  inset:0;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 14px 40px rgba(0,0,0,.6);
+
+  background: transparent;z-index:2;
+
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+  will-change:transform;
+}
+
+/* Each face rotates, not the parent (more reliable across browsers). */
+.face{
+  position:absolute;
+  inset:0;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+
+  transition:transform .45s cubic-bezier(.2,.7,.2,1);
+  will-change:transform;
+
+  /* micro translateZ helps avoid front "bleeding" through on some GPUs */
+  transform:translateZ(0.5px);
+
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+
+  image-rendering:auto;
+}
+
+.front{ transform:rotateY(0deg) translateZ(0.5px); }
+.back { transform:rotateY(180deg) translateZ(0.5px); background-color:#111; }
+
+.card.flipped .front{ transform:rotateY(-180deg) translateZ(0.5px); }
+.card.flipped .back { transform:rotateY(0deg) translateZ(0.5px); }
+
+/* Flip button: always top-right, regardless of face */
+.flipBtn{
+  position:absolute;
+  top:8px; right:8px;
+  width:40px;height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(0,0,0,.4);
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  z-index:6;
+  user-select:none;
+}
+
+/* HUD */
+.hudAction,.hudInfo{
+  position:absolute;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(15,23,48,.95);
+  box-shadow:0 12px 34px rgba(0,0,0,.6);
+  opacity:0;
+  transition:opacity var(--hudDur) ease, transform var(--hudDur) cubic-bezier(.2,.7,.2,1);
+  pointer-events:auto;
+  z-index:1;
+}
+.hudAction{
+  width:140px;height:120px;
+  left:-140px;
+  top:calc((var(--cardH) - 120px)/2);
+  display:flex;align-items:center;justify-content:center;
+  transform:translateX(40px);
+}
+.hudInfo{
+  min-width:200px;
+  max-width:280px;
+  left:var(--cardW);
+  top:0;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  transform:translateX(-40px);
+}
+.piece.hudOpen .hudAction,
+.piece.hudOpen .hudInfo{
+  opacity:1;
+  transform:translateX(0);
+}
+.irBtn{
+  width:66px;height:66px;border-radius:18px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(45,212,191,.3);
+  color:#fff;font-weight:1000;cursor:pointer;
+}
+.infoThumb{
+  width:100%;
+  aspect-ratio:16/9;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
+  background-color: rgba(255,255,255,.06);
+}
+.infoText{
+  font-size:13px;
+  white-space:pre-wrap;
+  line-height:1.25;
+}
+
+/* Flash */
+@keyframes wildFlash{
+  0%{ filter:brightness(1) contrast(1); transform:scale(1); }
+  20%{ filter:brightness(3) contrast(2.4) saturate(1.6); transform:scale(1.08) rotate(-3deg); }
+  50%{ transform:scale(1.05) rotate(3deg); }
+  100%{ filter:brightness(1) contrast(1); transform:scale(1); }
+}
+.piece.flash .card,
+.piece.flash .hudAction,
+.piece.flash .hudInfo{ animation:wildFlash .2s ease; }
+
+/* Hide card shadow during flip to avoid static shadow plane */
+.piece.flipping .card{ box-shadow:none !important; }
+
+/* Selected glow (only on front-click) */
+.piece.selected .card{
+  box-shadow:
+    0 14px 40px rgba(0,0,0,.6),
+    0 0 0 2px rgba(124,92,255,.55),
+    0 0 28px rgba(124,92,255,.55),
+    0 0 58px rgba(124,92,255,.35);
+}
+
+/* ===== v4-1 MOBILE LAYOUT (only mobile) ===== */
+@media (max-width: 768px){
+  .infoText{font-size:10px;line-height:1.2;}
+
+  :root{
+    /* mobile: slightly larger cards (still many visible) */
+    --cardW:78px;
+    --cardH:110px;
+    /* taller header + 2-row wrap */
+    --headerH:124px;
+  }
+  header{
+    padding:6px 10px 6px;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+    column-gap:8px;
+    row-gap:0px;
+  }
+  header button.hdrBtn{
+    padding:8px 10px;
+    border-radius:14px;
+    font-size:12px;
+    gap:8px;
+  }
+  header button.hdrBtn .ico{ font-size:16px; }
+  #total{
+    padding:8px 10px;
+    border-radius:14px;
+    font-size:12px;
+    width:fit-content;
+  }
+  #total .num{font-size:1.85em;font-weight:900;}
+  .flipBtn{
+    width:28px;height:28px;
+    border-radius:10px;
+    top:6px; right:6px;
+    font-size:14px;
+  }
+  .hudAction{
+    width:92px;height:70px;
+    left:-92px;
+    top:calc((var(--cardH) - 70px)/2);
+    transform:translateX(26px) scale(.82);
+    transform-origin:center;
+  }
+  .irBtn{ width:40px;height:40px;border-radius:12px; }
+  .hudInfo{
+    left:var(--cardW);
+    max-width:200px;
+    padding:6px;
+    max-height:calc(var(--cardH) - 10px);
+    overflow:hidden;
+    transform:translateX(-30px) scale(.55);
+    transform-origin:left top;
+  }  .piece.hudOpen .hudAction{ transform:translateX(0) scale(.82); }
+  .piece.hudOpen .hudInfo{ transform:translateX(0) scale(.82); }
+
+  /* v4-6 mobile fixes: INFO HUD shows image + text (no cropping) */
+  .hudInfo{
+    /* keep HUD smaller than the card height, but allow both thumb + text */
+    max-height:calc(var(--cardH) - 8px);
+    overflow:hidden;
+    gap:6px;
+  }
+  .infoThumb{
+    /* make the thumb smaller so description is always visible */
+    aspect-ratio:auto;
+    height:40px;
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+  }
+  .infoText{
+    display:block;
+    font-size:10px;
+    line-height:1.2;
+    overflow:hidden;
+  }
+
+
+  /* v5-1: encourage high-quality interpolation on mobile */
+  #world{ transform:translate3d(0,0,0); }
+  .face{
+    -webkit-transform:translateZ(0.5px);
+    transform:translateZ(0.5px);
+    image-rendering:auto;
+  }
+
+  /* v4-6 mobile fix: avoid pixelation when zooming (iOS rasterization) */
+  .card{ will-change:auto; }
+  .face{ will-change:auto; transform-style:preserve-3d; -webkit-transform-style:preserve-3d; }
+  .front{ transform:rotateY(0deg); }
+  .back{ transform:rotateY(180deg); }
+  .card.flipped .front{ transform:rotateY(-180deg); }
+  .card.flipped .back{ transform:rotateY(0deg); }
+
+}
+
+
+@media (max-width: 768px){
+  .hudAction{
+    left:0 !important;
+    top:-80px !important;
+    transform:translateY(20px) scale(.9) !important;
+  }
+  .piece.hudOpen .hudAction{
+    transform:translateY(0) scale(.9) !important;
+  }
+  .hudInfo{
+    left:0 !important;
+    top:var(--cardH) !important;
+    transform:translateY(-20px) scale(.9) !important;
+    transform-origin:top center !important;
+  }
+  .piece.hudOpen .hudInfo{
+    transform:translateY(0) scale(.9) !important;
+  }
+}
+
+/* ===== end v4-1 mobile ===== */
+
+
+/* ===== FX OVERLAY (v5-1) ===== */
+#fx{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  isolation:isolate;
+  z-index:20; /* above world, below header */
+}
+#fx canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+}
+#shade{ mix-blend-mode:multiply; opacity:0.235; }
+#lightMap{
+  mix-blend-mode:screen;
+  filter:blur(10px) brightness(1.55) saturate(1.10);;
+  opacity:.25;
+}
+#dust{ mix-blend-mode:screen; opacity:0.2125; }
+/* ===== end FX OVERLAY ===== */
+
+@media (max-width: 768px){
+  #fx{ display:none !important; }
+}
+
+
+
+
+/* ===== v6-4 MOBILE HEADER (reduce + 2 rows) ===== */
+.miniCount{ display:none; padding:10px 14px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); font-weight:900; }
+.miniCount .num{ font-size:1.35em; font-weight:1000; margin-left:6px; }
+
+@media (max-width:768px){
+  header{
+    height:112px;
+    padding:6px 10px 6px;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+    column-gap:8px;
+    row-gap:4px;
+  }
+  header button.hdrBtn{
+    padding:7px 9px;
+    border-radius:14px;
+    font-size:12px;
+    gap:8px;
+  }
+  #btnDeal, #btnFrame{ display:none !important; }
+  #total, #leidasCount, #pendientesCount{ display:flex; align-items:center; }
+  #total, #leidasCount, #pendientesCount{
+    padding:7px 9px;
+    border-radius:14px;
+    font-size:12px;
+    width:fit-content;
+  }
+  #total .num, #leidasCount .num, #pendientesCount .num{ font-size:1.55em; font-weight:900; }
+}
+/* ===== end v6-4 header ===== */
+
+
+/* ===== v6-4 MOBILE BOARD (3 zones centered) ===== */
+@media (max-width:768px){
+  #mobileBoard{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:22px;
+    z-index:4;
+    pointer-events:none;
+  }
+  #zoneRight{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:28px;
+  }
+  .zoneWrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
+  .slot{
+    width:calc(var(--cardW) * 1.10);
+    height:calc(var(--cardH) * 1.60);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(0,0,0,.10);
+    box-shadow:0 10px 30px rgba(0,0,0,.25) inset;
+  }
+  .slotDeck{
+    width:var(--cardW);
+    height:calc(var(--cardH) * 2 + 18px);
+    background:transparent;
+    border:0;
+    box-shadow:none;
+  }
+
+  .zoneLabel{
+    padding:10px 18px;
+    border-radius:18px;
+    font-weight:1000;
+    letter-spacing:.6px;
+    border:2px solid rgba(255,255,255,.75);
+    text-shadow:0 2px 0 rgba(0,0,0,.55);
+    box-shadow:0 10px 28px rgba(0,0,0,.35);
+    background:rgba(0,0,0,.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .zoneLabelRead{
+    background:linear-gradient(180deg, rgba(22,163,74,.85), rgba(22,163,74,.55));
+    border-color:rgba(255,255,255,.85);
+  }
+  .zoneLabelPending{
+    background:linear-gradient(180deg, rgba(220,38,38,.85), rgba(220,38,38,.55));
+    border-color:rgba(255,255,255,.85);
+  }
+}
+/* ===== end v6-4 board ===== */
+
+
+/* ===== v6-4 MOBILE HUD alignment by zone ===== */
+@media (max-width:768px){
+  .piece.z1 .hudInfo{
+    left:auto !important;
+    right:var(--cardW) !important;
+    transform-origin:top right !important;
+  }
+  .piece.zRead .hudInfo,
+  .piece.zPending .hudInfo{
+    left:var(--cardW) !important;
+    right:auto !important;
+    transform-origin:top left !important;
+  }
+}
+/* ===== end v6-4 hud alignment ===== */
+
+
+/* ===== v6-6 MOBILE: top-card preview + piles + colored counters ===== */
+@media (max-width:768px){
+  /* Colored counters */
+  #leidasCount{
+    background:rgba(22,163,74,.30) !important;
+    border-color:rgba(22,163,74,.65) !important;
+    box-shadow:0 0 18px rgba(22,163,74,.18) !important;
+  }
+  #pendientesCount{
+    background:rgba(220,38,38,.28) !important;
+    border-color:rgba(220,38,38,.65) !important;
+    box-shadow:0 0 18px rgba(220,38,38,.16) !important;
+  }
+
+  /* Lit glow during preview */
+  .piece.lit .card{ box-shadow:none !important; }
+}
+/* ===== end v6-6 ===== */
+
+
+/* ===== v6-7 MOBILE ZONES 4/5 + zone buttons ===== */
+@media (max-width:768px){
+  #zoneCenter{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+  .zoneHUD{
+    width:calc(var(--cardW) * 2.05);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(15,23,48,.86);
+    box-shadow:0 12px 34px rgba(0,0,0,.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px;
+    pointer-events:auto;
+  }
+  #zone4IR{ height:58px; }
+  #zone5INFO{
+    min-height:86px;
+    max-height:160px;
+    overflow:hidden;
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:flex-start;
+    gap:8px;
+  }
+  #zoneRight .zoneLabel{ cursor:pointer; user-select:none; pointer-events:auto; }
+  #zoneRight .zoneLabel:active{ transform:scale(.985); }
+  .piece.selected .card{ box-shadow:0 14px 40px rgba(0,0,0,.6) !important; }
+}
+/* ===== end v6-7 ===== */
+
+
+/* ===== v6-8 MOBILE: larger Zone1 cards + tighter Z4/Z5 ===== */
+@media (max-width:768px){
+  :root{
+    --cardW: 120px;
+    --cardH: 170px;
+  }
+  #zoneCenter{ gap:8px !important; }
+  #mobileBoard{ gap:18px !important; }
+  #zone4IR{ height:52px !important; }
+  #zone5INFO{ min-height:92px !important; }
+}
+/* ===== end v6-8 ===== */
+
+
+@media (max-width:768px){
+  #btnZoneRead, #btnZonePending{ color:#fff !important; }
+}
+
+
+/* ===== v6-8 MOBILE HEADER: 1 row, remove SACAR UNA + MOVER ===== */
+@media (max-width:768px){
+  #btnDraw, #btnMove{ display:none !important; }
+  header{
+    height:66px !important;
+    padding:6px 10px !important;
+    flex-wrap:nowrap !important;
+    justify-content:space-between !important;
+    column-gap:8px !important;
+    row-gap:0 !important;
+  }
+  header button.hdrBtn{
+    padding:6px 8px !important;
+    font-size:12px !important;
+  }
+  #total, #leidasCount, #pendientesCount{
+    padding:6px 8px !important;
+    font-size:11px !important;
+  }
+  #leidasCount .num, #pendientesCount .num{ font-size:1.25em !important; }
+}
+/* ===== end v6-8 header ===== */
+
+
+
+/* ===== v6-10 MOBILE LAYOUT (match provided sketch) ===== */
+@media (max-width:768px){
+  #mobileBoard{
+    position:absolute;
+    left:50% !important;
+    top:calc(66px + 10px) !important;
+    transform:translateX(-50%) !important;
+    gap:14px !important;
+    z-index:4;
+  }
+
+  #zoneCenter, #zoneRight{
+    width:44vw !important;
+    max-width:240px;
+  }
+  #zoneCenter{ gap:12px !important; align-items:stretch !important; }
+  #zoneRight{ gap:12px !important; align-items:stretch !important; }
+
+  #zone4IR{
+    width:100% !important;
+    height:58px !important;
+    border-radius:18px !important;
+    justify-content:center !important;
+    padding:10px !important;
+  }
+
+  #zone1Slot.slotDeck{
+    width:100% !important;
+    height:44vh !important;
+    min-height:280px;
+    max-height:520px;
+    border-radius:18px !important;
+    border:1px solid rgba(255,255,255,.10) !important;
+    background:rgba(0,0,0,.10) !important;
+    box-shadow:0 10px 30px rgba(0,0,0,.25) inset !important;
+  }
+
+  #zone5INFO{
+    width:100% !important;
+    height:22vh !important;
+    min-height:160px;
+    max-height:260px;
+    padding:12px !important;
+    gap:10px !important;
+    border-radius:18px !important;
+  }
+
+  #zone5INFO .infoThumb{
+    width:100%;
+    height:58px !important;
+    border-radius:14px !important;
+    background-color:rgba(255,255,255,.06) !important;
+    border:1px solid rgba(255,255,255,.10) !important;
+    flex:0 0 auto;
+  }
+  #zone5INFO .infoText{
+    width:100%;
+    font-size:14px !important;
+    line-height:1.25 !important;
+    color:rgba(255,255,255,.92) !important;
+    overflow:hidden;
+    flex:1 1 auto;
+  }
+
+  #btnZoneRead, #btnZonePending{
+    width:100% !important;
+    height:52px !important;
+    padding:10px 14px !important;
+    border-radius:18px !important;
+    color:#fff !important;
+    font-weight:1000 !important;
+    letter-spacing:.6px !important;
+  }
+  #zoneReadSlot, #zonePendingSlot{
+    width:100% !important;
+    height:34vh !important;
+    min-height:240px;
+    max-height:440px;
+    border-radius:18px !important;
+  }
+
+  #btnZoneRead{ order:0; margin-bottom:-6px; }
+  #zoneReadSlot{ order:1; }
+  #zonePendingSlot{ order:2; }
+  #btnZonePending{ order:3; margin-top:-6px; }
+
+  #mobileBoard{ pointer-events:none; }
+  #mobileBoard button{ pointer-events:auto; }
+}
+/* ===== end v6-10 ===== */
+
+
+/* ===== v6-13 DESKTOP: read area + mode (layering + behavior) ===== */
+#readArea{
+  pointer-events:auto;
+  
+  position:absolute;
+  top:18px;
+  right:18px;
+  width:260px;
+  height:320px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(0,0,0,.18);
+  box-shadow:0 18px 50px rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index:3;
+  display:none; /* enabled on desktop via media query */
+  overflow:hidden;
+}
+#readArea .readSlot{
+  position:absolute;
+  inset:16px 16px 64px 16px;
+  border-radius:18px;
+  border:1px dashed rgba(255,255,255,.18);
+  background:rgba(255,255,255,.04);
+
+  z-index:0;
+}
+#btnReadArea{
+  position:absolute;
+  left:16px;
+  right:16px;
+  bottom:16px;
+  height:44px;
+  border-radius:18px;
+  border:2px solid rgba(255,255,255,.65);
+  background:rgba(20,20,30,.35);
+  color:#fff;
+  font-weight:1000;
+  letter-spacing:.8px;
+
+  z-index:2;
+}
+#btnReadBack{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:74px;
+  height:74px;
+  border-radius:999px;
+  border:2px solid rgba(255,255,255,.75);
+  background:rgba(0,0,0,.35);
+  color:#fff;
+  font-size:28px;
+  display:none;
+
+  z-index:3;
+}
+@media (min-width:769px){
+  #readArea{
+  pointer-events:auto;
+   display:block; }
+}
+
+/* hide pieces when parked */
+.piece.parked{ display:none !important; }
+
+/* ===== v6-12 MOBILE: remove gap under header ===== */
+@media (max-width:768px){
+  #mobileBoard{
+    top:10px !important;     /* inside stage, just under header */
+    transform:translateX(-50%) !important;
+  }
+}
+
+
+/* ===== v6-15 DESKTOP: header LEÍDAS count + read area layout ===== */
+.miniCountDesk{
+  display:flex;
+  align-items:center;
+  padding:10px 14px;
+  border-radius:14px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.16);
+  font-weight:900;
+  gap:8px;
+}
+.miniCountDesk .num{ font-size:1.55em; font-weight:1000; }
+
+/* Read area: make blur box taller, button below and always visible */
+#readArea{
+  height:260px; /* bigger in Y */
+}
+#btnReadArea{
+  position:absolute;
+  top:calc(100% + 10px);
+  left:50%;
+  transform:translateX(-50%);
+  width:88%;
+}
+/* When stacked in read pile (normal mode), disable HUDs */
+.piece.inReadPile .hud,
+.piece.inReadPile .irBtn,
+.piece.inReadPile .infoHud,
+.piece.inReadPile .hudInfo,
+.piece.inReadPile .hudTop{
+  display:none !important;
+}
+/* ===== end v6-15 ===== */
+
+</style>
+</head>
+<body>
+
+<header>
+<button id="btnDeck" class="hdrBtn"><span class="ico" aria-hidden="true">🂠</span><span class="lbl">MAZO</span></button>
+<button id="btnDraw" class="hdrBtn"><span class="ico" aria-hidden="true">🎴</span><span class="lbl">SACAR UNA</span></button>
+<button id="btnDeal" class="hdrBtn"><span class="ico" aria-hidden="true">🃏</span><span class="lbl">REPARTIR</span></button>
+<button id="btnMove" class="hdrBtn"><span class="ico" aria-hidden="true">🌀</span><span class="lbl">MOVER</span></button>
+<button id="btnFrame" class="hdrBtn"><span class="ico" aria-hidden="true">🎯</span><span class="lbl">ENCUADRAR</span></button>
+<div id="total">TOTAL: <span class="num">0</span></div>
+<div id="leidasHeader" class="miniCountDesk">LEÍDAS: <span class="num">0</span></div>
+<div id="leidasCount" class="miniCount">LEÍDAS: <span class="num">0</span></div>
+<div id="pendientesCount" class="miniCount">PENDIENTES: <span class="num">0</span></div>
+</header>
+
+<div id="stage">
+  <div id="world">
+    <div id="bg"></div>
+
+<div id="readArea" aria-label="Zona LEÍDAS">
+  <div class="readSlot"></div>
+  <button id="btnReadArea" type="button">LEÍDAS</button>
+  <button id="btnReadBack" type="button" title="VOLVER">↩</button>
+</div>
+
+
+<div id="mobileBoard" aria-hidden="true">
+  <div id="zoneCenter">
+    <div id="zone4IR" class="zoneHUD zoneHUDTop"></div>
+    <div id="zone1Slot" class="slot slotDeck"></div>
+    <div id="zone5INFO" class="zoneHUD zoneHUDBot">
+      <div class="infoThumb" id="z5Thumb" style="display:none"></div>
+      <div class="infoText" id="z5Text" style="display:none"></div>
+    </div>
+  </div>
+
+  <div id="zoneRight">
+    <button id="btnZoneRead" class="zoneLabel zoneLabelRead" type="button">LEÍDAS</button>
+    <div id="zoneReadSlot" class="slot slotRead"></div>
+
+    <div id="zonePendingSlot" class="slot slotPending"></div>
+    <button id="btnZonePending" class="zoneLabel zoneLabelPending" type="button">PENDIENTES</button>
+  </div>
+</div>
+
+    <div id="viewport"></div>
+  </div>
+</div>
+
+
+<div id="fx">
+  <canvas id="shade"></canvas>
+  <canvas id="lightMap"></canvas>
+  <canvas id="dust"></canvas>
+</div>
+
+<script>
+const viewport = document.getElementById("viewport");
+const stage = document.getElementById("stage");
+const world = document.getElementById("world");
+const bg = document.getElementById("bg");
+const totalEl = document.getElementById("total");
+
+const btnDeck  = document.getElementById("btnDeck");
+const btnDraw  = document.getElementById("btnDraw");
+const btnDeal  = document.getElementById("btnDeal");
+const btnMove  = document.getElementById("btnMove");
+const btnFrame = document.getElementById("btnFrame");
+
+const isMobile = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+/* ===== v6-4 mobile zones state ===== */
+let mobileZone = new Map(); // piece -> "z1" | "read" | "pending"
+let zRead = [];
+let zPending = [];
+
+function qs(id){ return document.getElementById(id); }
+
+function getCardWH(){
+  const cs = getComputedStyle(document.documentElement);
+  return {
+    w: parseFloat(cs.getPropertyValue("--cardW")) || 78,
+    h: parseFloat(cs.getPropertyValue("--cardH")) || 110
+  };
+}
+
+function boardRects(){
+  const s = stage.getBoundingClientRect();
+  const r1 = qs("zone1Slot")?.getBoundingClientRect();
+  const rr = qs("zoneReadSlot")?.getBoundingClientRect();
+  const rp = qs("zonePendingSlot")?.getBoundingClientRect();
+  return {s, r1, rr, rp};
+}
+
+function pointInRect(x,y,r){
+  return !!r && x>=r.left && x<=r.right && y>=r.top && y<=r.bottom;
+}
+
+function setZone(p, z){
+  mobileZone.set(p, z);
+  p.el.classList.toggle("z1", z==="z1");
+  p.el.classList.toggle("zRead", z==="read");
+  p.el.classList.toggle("zPending", z==="pending");
+}
+
+function syncCounts(){
+  const le = document.getElementById("leidasCount");
+  const pe = document.getElementById("pendientesCount");
+  if(le) le.querySelector(".num").textContent = String(zRead.length);
+  if(pe) pe.querySelector(".num").textContent = String(zPending.length);
+}
+
+function layoutMobileZones(){
+  if(!isMobile) return;
+  const {w,h} = getCardWH();
+  const {s, r1, rr, rp} = boardRects();
+  if(!r1 || !rr || !rp) return;
+
+  const toWorld = (rect) => ({
+    x: rect.left - s.left,
+    y: rect.top  - s.top,
+    w: rect.width,
+    h: rect.height
+  });
+  const W1 = toWorld(r1);
+  const WR = toWorld(rr);
+  const WP = toWorld(rp);
+
+  const z1x = W1.x + (W1.w - w)/2;
+  const z1y = W1.y + (W1.h - h)/2;
+
+  activePieces().forEach((p)=>{
+    const z = mobileZone.get(p) || "z1";
+    if(z === "z1"){
+      p.tx = z1x; p.baseTx = z1x;
+      p.ty = z1y; p.baseTy = z1y;
+    }
+  });
+
+  const stackIn = (arr, slot, baseTop=true) => {
+    // pile stack (deck-like) with small offsets
+    const baseX = slot.x + (slot.w - w)/2;
+    const baseY = slot.y + (slot.h - h)/2;
+    const off = 7; // px
+    arr.forEach((p, i)=>{
+      const dx = i * off;
+      const dy = i * off * 0.55;
+      p.tx = baseX + dx; p.baseTx = p.tx;
+      p.ty = baseY + dy; p.baseTy = p.ty;
+      p.el.style.zIndex = String(200 + i);
+      // placed cards should be normal scale, no glow
+      p.ts = 1;
+      p.previewed = true; // already "seen"
+      
+      p.el.classList.remove('hudOpen');
+    });
+  };
+
+  stackIn(zRead, WR, true);
+  stackIn(zPending, WP, false);
+  normalizeZone1Stack();
+}
+
+function dropToZone(p, clientX, clientY){
+  if(!isMobile) return false;
+  const {rr, rp} = boardRects();
+  if(pointInRect(clientX, clientY, rr)){
+    zPending = zPending.filter(x=>x!==p);
+    if(!zRead.includes(p)) zRead.push(p);
+    setZone(p, "read");
+    syncCounts();
+    layoutMobileZones();
+    return true;
+  }
+  if(pointInRect(clientX, clientY, rp)){
+    zRead = zRead.filter(x=>x!==p);
+    if(!zPending.includes(p)) zPending.push(p);
+    setZone(p, "pending");
+    syncCounts();
+    layoutMobileZones();
+    return true;
+  }
+  return false;
+}
+/* ===== end v6-4 mobile zones state ===== */
+
+/* ===== v6-6 mobile top-card + piles ===== */
+function deckTop(){
+  if(!isMobile) return null;
+  const z1 = pieces.filter(p => (mobileZone.get(p)||'z1') === 'z1');
+  if(!z1.length) return null;
+  z1.sort((a,b)=> (parseInt(a.el.style.zIndex||"0",10) - parseInt(b.el.style.zIndex||"0",10)));
+  return z1[z1.length-1];
+}
+
+function isTopCard(p){
+  const t = deckTop();
+  return t && t === p;
+}
+
+function normalizeZone1Stack(){
+  if(!isMobile) return;
+  // keep all zone1 cards stacked in same place so you never see the next until top leaves
+  const {s, r1} = boardRects();
+  if(!r1) return;
+  const {w,h} = getCardWH();
+  const x = (r1.left - s.left) + (r1.width - w)/2;
+  const y = (r1.top  - s.top ) + (r1.height - h)/2;
+  const z1 = pieces.filter(p => (mobileZone.get(p)||'z1') === 'z1');
+  z1.forEach((p,i)=>{
+    // don't override the dragged piece while dragging
+    if(p.dragging) return;
+    p.tx = x; p.ty = y;
+    p.baseTx = x; p.baseTy = y;
+    // keep a clean stack ordering
+    p.el.style.zIndex = String(10 + i);
+  });
+  zTop = Math.max(zTop, 10 + z1.length + 5);
+}
+
+function closeHUDsMobile(){
+  closeAllHUD();
+  clearSelection();
+  if(isMobile) clearHudZones();
+}
+
+/* ===== v6-7 HUD zones (Zone4 IR + Zone5 INFO) ===== */
+let activePiece = null;
+
+function clearHudZones(){
+  const z4 = document.getElementById("zone4IR");
+  const t = document.getElementById("z5Text");
+  const th = document.getElementById("z5Thumb");
+  if(z4) z4.innerHTML = "";
+  if(t){ t.textContent=""; t.style.display="none"; }
+  if(th){ th.style.backgroundImage=""; th.style.display="none"; }
+  activePiece = null;
+}
+
+function showHudZonesFor(p){
+  if(!isMobile) return;
+  activePiece = p;
+  const z4 = document.getElementById("zone4IR");
+  const t = document.getElementById("z5Text");
+  const th = document.getElementById("z5Thumb");
+  if(!z4 || !t || !th) return;
+
+  z4.innerHTML = "";
+  if(p?.meta?.url){
+    const b = document.createElement("button");
+    b.className = "irBtn";
+    b.textContent = "IR";
+    b.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      window.open(p.meta.url, "_blank", "noopener,noreferrer");
+    });
+    z4.appendChild(b);
+  }
+
+  if(p?.meta?.hud){
+    th.style.display = "block";
+    th.style.backgroundImage = `url("images/${p.meta.hud}")`;
+    const c = p.meta.hudCrop;
+    if(c && typeof c === "object"){
+      const sc = Number(c.scale || 1);
+      const ox = Number(c.x || 0);
+      const oy = Number(c.y || 0);
+      th.style.backgroundSize = `${Math.max(0.1, sc) * 100}%`;
+      th.style.backgroundPosition = `calc(50% + ${ox}px) calc(50% + ${oy}px)`;
+      th.style.backgroundRepeat = "no-repeat";
+    }else{
+      th.style.backgroundSize = "cover";
+      th.style.backgroundPosition = "center";
+      th.style.backgroundRepeat = "no-repeat";
+    }
+  }else{
+    th.style.display = "none";
+  }
+
+  if(p?.meta?.hudText){
+    t.style.display = "block";
+    t.textContent = p.meta.hudText;
+  }else{
+    t.style.display = "none";
+    t.textContent = "";
+  }
+}
+/* ===== end v6-7 HUD zones ===== */
+/* ===== end v6-6 ===== */
+
+
+let maxScale = isMobile ? 1.0 : 2.5;
+
+let pieces = [];
+// ===== v6-12 DESKTOP read mode =====
+let readPile = [];          // pieces stored in read area
+let readMode = false;
+let parked = new Map();     // piece -> {tx,ty,ts,zIndex,rot,flip}
+function tablePieces(){
+  return pieces.filter(p => !readPile.includes(p));
+}
+function activePieces(){
+  // Normal mode: only cards on the table (excluding LEÍDAS pile).
+  // Read mode: only LEÍDAS cards (other cards are parked/off-screen).
+  return readMode ? readPile : tablePieces();
+}
+function setTotalCount(n){
+  const totalEl = document.getElementById("total");
+  if(!totalEl) return;
+  totalEl.innerHTML = `TOTAL: <span class="num">${n}</span>`;
+}
+function updateTotalForMode(){
+  setTotalCount(activePieces().length);
+}
+function readAreaRects(){
+  const ra = document.getElementById("readArea");
+  if(!ra) return null;
+  return ra.getBoundingClientRect();
+}
+function inRect(x,y,r){ return r && x>=r.left && x<=r.right && y>=r.top && y<=r.bottom; }
+
+function layoutReadPileStack(){
+  const ra = document.getElementById("readArea");
+  if(!ra) return;
+  const s = stage.getBoundingClientRect();
+  const r = ra.getBoundingClientRect();
+  const cs = getComputedStyle(document.documentElement);
+  const cardW = parseFloat(cs.getPropertyValue("--cardW")) || 110;
+  const cardH = parseFloat(cs.getPropertyValue("--cardH")) || 160;
+
+  const worldLeft = (r.left - s.left - panX)/scale;
+  const worldTop  = (r.top  - s.top  - panY)/scale;
+  const worldW    = r.width/scale;
+  const worldH    = r.height/scale;
+
+  const baseX = worldLeft + (worldW - cardW)/2;
+  const baseY = worldTop  + (worldH - cardH)/2;
+
+  const off = 6;
+  readPile.forEach((p,i)=>{
+    p.tx = baseX + i*off;
+    p.ty = baseY + i*off*0.55;
+    p.ts = 1;
+    p.el.style.zIndex = String(950 + i);
+  });
+}
+
+function enterReadMode(){
+  if(readMode) return;
+  readMode = true;
+  const back = document.getElementById("btnReadBack");
+  if(back) back.style.display = "block";
+
+  // park non-read cards
+  for(const p of pieces){
+    if(p.el.classList.contains('parked')) continue;
+    if(readPile.includes(p)) continue;
+    parked.set(p, {tx:p.tx, ty:p.ty, ts:p.ts, zIndex:p.el.style.zIndex});
+    p.el.classList.add("parked");
+  }
+  // deploy read pile into a spread
+  const {w,h} = getCardWH ? getCardWH() : {w:120,h:170};
+  const cols = Math.max(1, Math.floor((stage.clientWidth - 60)/(w*1.05)));
+  readPile.forEach((p,i)=>{
+    p.el.classList.remove("parked");
+    const col = i % cols;
+    const row = Math.floor(i/cols);
+    p.tx = (30 + col*(w*1.05) - panX)/scale;
+    p.ty = (90 + row*(h*0.90) - panY)/scale;
+    p.el.style.zIndex = String(900 + i);
+  });
+
+  updateTotalForMode();
+}
+
+function exitReadMode(){
+  if(!readMode) return;
+  readMode = false;
+  const back = document.getElementById("btnReadBack");
+  if(back) back.style.display = "none";
+  // restore parked cards
+  for(const [p, st] of parked.entries()){
+    p.el.classList.remove("parked");
+    p.tx = st.tx; p.ty = st.ty; p.ts = st.ts;
+    if(st.zIndex!==undefined) p.el.style.zIndex = st.zIndex;
+  }
+  parked.clear();
+  // restack read pile
+  layoutReadPileStack();
+        updateTotalForMode();
+  updateTotalForMode();
+}
+// ===== end v6-12 =====
+
+// ===== v6-13 wiring (desktop read area + mode) =====
+function tablePieces(){
+  // pieces that are NOT in the LEÍDAS zone
+  return pieces.filter(p => !readPile.includes(p));
+}
+
+function updateReadCounts(){
+  const lh = document.getElementById('leidasHeader');
+  if(lh) lh.querySelector('.num').textContent = String(readPile.length);
+
+  const le = document.getElementById("leidasCount");
+  if(le) le.querySelector(".num").textContent = String(readPile.length);
+  updateTotalForMode();
+}
+
+function addToReadPile(p){
+  if(readPile.includes(p)) return;
+  readPile.push(p);
+  p.el.classList.add('inReadPile');
+  closeAllHUD();
+  clearSelection();
+  updateReadCounts();
+  layoutReadPileStack();
+}
+
+function removeFromReadPile(p){
+  const i = readPile.indexOf(p);
+  if(i>=0){
+    readPile.splice(i,1);
+    p.el.classList.remove('inReadPile');
+    updateReadCounts();
+  }
+}
+
+function isInReadArea(clientX, clientY){
+  const ra = readAreaRects();
+  return inRect(clientX, clientY, ra);
+}
+
+// Click on read area enters mode
+window.addEventListener("DOMContentLoaded", ()=>{
+  const ra = document.getElementById("readArea");
+  const bEnter = document.getElementById("btnReadArea");
+  const bBack = document.getElementById("btnReadBack");
+  if(ra) ra.addEventListener("click", (e)=>{
+    if(isMobile) return;
+    if(readMode) return;
+    // ignore if clicking on a card over the area
+    if(e.target.closest(".piece")) return;
+    enterReadMode();
+  });
+  if(bEnter) bEnter.addEventListener("click", (e)=>{
+    if(isMobile) return;
+    e.stopPropagation();
+    if(!readMode) enterReadMode();
+  });
+  if(bBack) bBack.addEventListener("click", (e)=>{
+    if(isMobile) return;
+    e.stopPropagation();
+    exitReadMode();
+  });
+});
+
+// When exiting mode, ensure counts/stack are correct
+const __exitReadMode = exitReadMode;
+exitReadMode = function(){
+  __exitReadMode();
+  // v6-15: stacked read pile disables HUDs
+  readPile.forEach(p=>p.el.classList.add('inReadPile'));
+  layoutReadPileStack();
+  updateReadCounts();
+};
+
+// Adjust enterReadMode to show back and ensure other cards are really off-screen (parked)
+const __enterReadMode = enterReadMode;
+enterReadMode = function(){
+  __enterReadMode();
+  // v6-15: allow HUDs while inspecting in readMode
+  readPile.forEach(p=>p.el.classList.remove('inReadPile'));
+  updateReadCounts();
+};
+
+// ===== end v6-13 wiring =====
+
+
+let selectedPiece = null;
+let scale = 1, panX = 0, panY = 0;
+let minScale = isMobile ? 1.0 : 1;          // allow more zoom-out on mobile
+let homeScale = isMobile ? 1.0 : 1;
+
+// BG overscan so it never reveals black margins, while still moving with zoom.
+let bgBaseW = 0, bgBaseH = 0, bgOffX = 0, bgOffY = 0;
+function updateBgMetrics(){
+  const rect = stage.getBoundingClientRect();
+  // Make BG large enough so that even at minScale it still covers the stage.
+  const overscan = 1.06; // small safety margin
+  bgBaseW = rect.width / Math.max(0.0001, minScale) * overscan;
+  bgBaseH = rect.height / Math.max(0.0001, minScale) * overscan;
+
+  // Center the BG around the stage at pan=0.
+  bgOffX = -(bgBaseW - rect.width) / 2;
+  bgOffY = -(bgBaseH - rect.height) / 2;
+
+  bg.style.width = bgBaseW + "px";
+  bg.style.height = bgBaseH + "px";
+  bg.style.left = bgOffX + "px";
+  bg.style.top = bgOffY + "px";
+}
+         // initial framing (closer than minScale)
+let moverOn = false;
+let zTop = 10;
+
+function clampPan(){
+  if(isMobile){ panX=0; panY=0; return; }
+
+  // Clamp so the BG always covers the stage (no black margins).
+  const rect = stage.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+  if(!bgBaseW || !bgBaseH) updateBgMetrics();
+
+  const minTx = w - (bgOffX + bgBaseW) * scale;
+  const maxTx = -bgOffX * scale;
+  const minTy = h - (bgOffY + bgBaseH) * scale;
+  const maxTy = -bgOffY * scale;
+
+  panX = Math.min(maxTx, Math.max(minTx, panX));
+  panY = Math.min(maxTy, Math.max(minTy, panY));
+}
+
+function updateView(){
+  if(isMobile){ panX = 0; panY = 0; scale = 1; }
+
+  clampPan();
+  world.style.transform = `translate3d(${panX}px,${panY}px,0) scale(${scale})`;
+}
+
+
+function clearSelection(){
+  if(selectedPiece){
+    selectedPiece.el.classList.remove("selected");
+    selectedPiece = null;
+  }
+}
+
+function closeAllHUD(){
+  activePieces().forEach(p => p.el.classList.remove("hudOpen"));
+}
+
+/* CREATE CARD */
+function createPiece(meta){
+  const el = document.createElement("div");
+  el.className = "piece";
+  el.style.zIndex = ++zTop;
+
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const front = document.createElement("div");
+  front.className = "face front";
+  if(meta.front){
+    const u = encodeURI("images/" + meta.front);
+    front.style.backgroundImage = `url("${u}")`;
+  }
+
+  const back = document.createElement("div");
+  back.className = "face back";
+  if(meta.back){
+    const u = encodeURI("images/" + meta.back);
+    back.style.backgroundImage = `url("${u}")`;
+  }
+
+  // Flip button is duplicated: one on FRONT and one on BACK so it always sits top-right
+  // and rotates with the visible face (no "plane staying still" during flip).
+  const mkFlipBtn = () => {
+    const b = document.createElement("button");
+    b.className = "flipBtn";
+    b.textContent = "↻";
+    b.addEventListener("pointerdown", e => { e.stopPropagation(); });
+    b.addEventListener("click", e => { e.stopPropagation(); el.classList.add("flipping"); card.classList.toggle("flipped"); closeAllHUD(); setTimeout(()=>el.classList.remove("flipping"), 520); });
+    return b;
+  };
+  front.appendChild(mkFlipBtn());
+  back.appendChild(mkFlipBtn());
+
+  card.append(front, back);
+
+  const hudA = document.createElement("div");
+  hudA.className = "hudAction";
+  const ir = document.createElement("button");
+  ir.className = "irBtn";
+  ir.textContent = "IR";
+  ir.addEventListener("pointerdown", e => e.stopPropagation());
+  ir.addEventListener("click", e => {
+    e.stopPropagation();
+    if(meta.url) window.open(meta.url, "_blank", "noopener,noreferrer");
+  });
+  hudA.appendChild(ir);
+
+  const hudI = document.createElement("div");
+  hudI.className = "hudInfo";
+  if(meta.hud){
+    const thumb = document.createElement("div");
+    thumb.className = "infoThumb";
+    thumb.style.backgroundImage = `url("images/${meta.hud}")`;
+
+    // v5-1: apply manifest crop if present (fill width, crop overflow, no deformation)
+    const c = meta.hudCrop;
+    if(c && typeof c === "object"){
+      const sc = Number(c.scale || 1);
+      const ox = Number(c.x || 0);
+      const oy = Number(c.y || 0);
+      thumb.style.backgroundSize = `${Math.max(0.1, sc) * 100}%`;
+      thumb.style.backgroundPosition = `calc(50% + ${ox}px) calc(50% + ${oy}px)`;
+      thumb.style.backgroundRepeat = "no-repeat";
+    }else{
+      // fallback: always fill the slot (cropped if needed)
+      thumb.style.backgroundSize = "cover";
+      thumb.style.backgroundPosition = "center";
+      thumb.style.backgroundRepeat = "no-repeat";
+    }
+
+    hudI.appendChild(thumb);
+  }
+  if(meta.hudText){
+    const text = document.createElement("div");
+    text.className = "infoText";
+    text.textContent = meta.hudText;
+    hudI.appendChild(text);
+  }
+
+  el.append(card, hudA, hudI);
+  viewport.appendChild(el);
+
+  const p = {
+    el, card,
+    meta,
+    x: Number(meta.x || 0),
+    y: Number(meta.y || 0),
+    tx: Number(meta.x || 0),
+    ty: Number(meta.y || 0),
+    baseTx: Number(meta.x || 0),
+    baseTy: Number(meta.y || 0),
+    phase: Math.random()*Math.PI*2,
+    dragging: false,
+    moved: 0,
+    suppressClickUntil: 0,
+    previewed: false,
+    s: 1,
+    ts: 1
+  };
+  pieces.push(p);
+
+  /* DRAG: do NOT open HUDs */
+  el.addEventListener("pointerdown", e => {
+    if(isMobile && !e.target.closest(".card")) return;
+    // Only start interactions when the user touches the card surface (not HUDs/controls).
+    if(!e.target.closest(".card")) return;
+    if(e.target.closest(".hud") || e.target.closest(".flipBtn") || e.target.closest(".irBtn") || e.target.closest("button") || e.target.closest("a")) return;
+    // v6-6 drag gate (mobile): only top card in Zone 1, and only after preview
+    if(isMobile){
+      const z = mobileZone.get(p)||"z1";
+      if(z !== "z1") return;
+      if(!isTopCard(p)) return;
+      
+    }
+    p.dragging = true;
+    p.moved = 0;
+    p.startX = e.clientX;
+    p.startY = e.clientY;
+    p.baseX = p.tx;
+    p.baseY = p.ty;
+    el.setPointerCapture(e.pointerId);
+    el.style.zIndex = ++zTop;
+  });
+  el.addEventListener("pointermove", e => {
+    if(!p.dragging) return;
+    const dx = (e.clientX - p.startX) / scale;
+    const dy = (e.clientY - p.startY) / scale;
+    p.moved = Math.max(p.moved, Math.abs(dx)+Math.abs(dy));
+    p.tx = p.baseX + dx;
+    p.ty = p.baseY + dy;
+  });
+  el.addEventListener("pointerup", (e) => {
+    if(!p.dragging) return;
+    p.dragging = false;
+    // v6-15 desktop drop to read area / remove (only when NOT in readMode)
+    if(!isMobile && !readMode){
+      const inside = isInReadArea(e.clientX, e.clientY);
+      const inPile = readPile.includes(p);
+      if(inside){
+        addToReadPile(p);
+        layoutReadPileStack();
+      }else if(inPile){
+        // dragged out -> remove from pile and keep on table
+        removeFromReadPile(p);
+        p.el.style.zIndex = String(++zTop);
+      }
+    }
+    // v6-15 desktop remove from read area
+
+    if(!isMobile && !readMode){
+      const r = readAreaRects();
+      if(inRect(e.clientX, e.clientY, r)){
+        if(!readPile.includes(p)) readPile.push(p);
+        layoutReadPileStack();
+        updateTotalForMode();
+      }
+    }
+
+    if(isMobile){
+      const ok = dropToZone(p, e.clientX, e.clientY);
+      if(ok){
+        // snap success
+        p.ts = 1;
+        
+        p.el.classList.remove('hudOpen');
+        clearHudZones();
+        closeHUDsMobile();
+        normalizeZone1Stack();
+      }else{
+        // remain in zone1 (still enlarged), just re-stack
+        setZone(p,'z1');
+        layoutMobileZones();
+      }
+    }
+    if(p.moved > 6){
+      p.suppressClickUntil = performance.now() + 40;
+    }
+  });
+
+    /* CLICK toggles HUDs (only if not dragged) */
+  el.addEventListener("click", e => {
+    if(e.target.closest(".flipBtn") || e.target.closest(".irBtn")) return;
+    if(performance.now() < p.suppressClickUntil) return;
+
+    // SOLO FRONTAL: no seleccionar/abrir HUD si estamos viendo el BACK
+    if(card.classList.contains("flipped")) return;
+
+    // v6-7 click sequence (mobile): 1st click preview (x1.5), 2nd click HUD zones
+    if(isMobile){
+      const z = mobileZone.get(p)||"z1";
+      if(z==="z1"){
+        if(!isTopCard(p)) return;
+        if(!p.previewed){
+          closeHUDsMobile();
+          p.previewed = true;
+          p.ts = 1;
+          p.el.style.zIndex = String(++zTop);
+          clearHudZones();
+          return;
+        }
+        // second click -> show HUD zones
+        showHudZonesFor(p);
+        return;
+      }
+    }
+
+    // v6-6 click sequence (mobile): 1st click preview (x3 + glow), 2nd click HUDs
+    if(isMobile){
+      const z = mobileZone.get(p)||'z1';
+      if(z==='z1'){
+        if(!isTopCard(p)) return;
+        if(!p.previewed){
+          closeHUDsMobile();
+          p.previewed = true;
+          p.ts = 1;
+          
+          p.el.style.zIndex = String(++zTop);
+          return;
+        }
+        // already previewed -> toggle HUDs
+        const willOpenM = !el.classList.contains('hudOpen');
+        closeAllHUD();
+        if(willOpenM){
+          el.classList.add('flash');
+          setTimeout(()=>el.classList.remove('flash'), 210);
+          el.classList.add('hudOpen');
+        }
+        return;
+      }
+      // if card is in read/pending, ignore clicks
+      return;
+    }
+
+
+    const willOpen = !el.classList.contains("hudOpen");
+    closeAllHUD();
+
+    // Glow de selección (desktop only)
+    if(!isMobile){
+      if(selectedPiece && selectedPiece !== p) selectedPiece.el.classList.remove("selected");
+      selectedPiece = p;
+      el.classList.add("selected");
+    }
+
+    if(willOpen){
+      el.classList.add("flash");
+      setTimeout(()=>el.classList.remove("flash"), 210);
+      el.classList.add("hudOpen");
+    }
+  });
+
+  return p;
+}
+
+/* LOAD MANIFEST */
+function loadManifest(data){
+  viewport.querySelectorAll(".piece").forEach(e => e.remove());
+  pieces = [];
+  zTop = 10;
+  clearSelection();
+  if(!data || !Array.isArray(data.cards)){
+    alert("Manifest inválido");
+    return;
+  }
+  data.cards.forEach((m)=>{ const p=createPiece(m); if(isMobile){ setZone(p,'z1'); } });
+  totalEl.innerHTML = `TOTAL: <span class="num">${data.cards.length}</span>`;
+  if(!isMobile){ updateTotalForMode(); }
+  if(isMobile){ zRead=[]; zPending=[]; syncCounts(); requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
+  stackCenter();
+  if(isMobile){ requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
+}
+
+fetch("manifest/manifest.json", {cache:"no-store"}).then(r=>r.json()).then(loadManifest).catch(()=>{});
+
+/* HEADER BUTTONS */
+function stackCenter(){
+  if(!isMobile){
+    exitReadMode();
+    readPile = [];
+  }
+
+  if(!activePieces().length) return;
+  closeAllHUD();
+  clearSelection();
+
+  if(isMobile){
+    zRead=[]; zPending=[];
+    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1;  p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
+    zTop = 10 + pieces.length + 10;
+    syncCounts();
+    scale=1; panX=0; panY=0;
+    updateBgMetrics();
+    updateView();
+    requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); });
+    return;
+  }
+
+  const rect = stage.getBoundingClientRect();
+  const cs = getComputedStyle(document.documentElement);
+  const cardW = parseFloat(cs.getPropertyValue("--cardW")) || 175;
+  const cardH = parseFloat(cs.getPropertyValue("--cardH")) || 246;
+
+  const cx = (rect.width/2) - (cardW/2);
+  const cy = (rect.height/2) - (cardH/2);
+
+  pieces.forEach((p,i)=>{
+    p.tx = cx;
+    p.ty = cy;
+    p.el.style.zIndex = i+1;
+  });
+  zTop = pieces.length + 5;
+
+  // Home view: deck centered, slightly closer on mobile.
+  scale = homeScale;
+  panX = 0;
+  panY = 0;
+  updateView();
+}
+
+function dealRandom(){
+  if(!activePieces().length) return;
+  closeAllHUD();
+  clearSelection();
+
+  if(isMobile){
+    zRead=[]; zPending=[];
+    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1;  p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
+    zTop = 10 + pieces.length + 10;
+    syncCounts();
+    scale=1; panX=0; panY=0;
+    updateBgMetrics();
+    updateView();
+    requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); });
+    return;
+  }
+  closeAllHUD();
+  const rect = stage.getBoundingClientRect();
+  const maxX = Math.max(0, rect.width/scale - 175 - 12);
+  const maxY = Math.max(0, rect.height/scale - 246 - 12);
+  activePieces().forEach(p=>{
+    p.tx = 6 + Math.random()*maxX;
+    p.ty = 6 + Math.random()*maxY;
+    p.el.style.zIndex = ++zTop;
+  });
+}
+
+function drawOne(){
+  if(isMobile){
+    const p = deckTop();
+    if(!p) return;
+    // behave like first click: preview card (x3 + glow)
+    closeHUDsMobile();
+    p.previewed = true;
+    p.ts = 1;
+    
+    p.el.style.zIndex = String(++zTop);
+    return;
+  }
+  if(!activePieces().length) return;
+  closeAllHUD();
+  clearSelection();
+  closeAllHUD();
+  const ap = activePieces();
+  const p = ap[Math.floor(Math.random()*ap.length)];
+  p.el.style.zIndex = ++zTop;
+  p.tx += 18;
+  p.ty += 18;
+  p.el.classList.add("flash");
+  setTimeout(()=>p.el.classList.remove("flash"), 210);
+}
+
+btnDeck.addEventListener("click", () => {
+  if(isMobile){
+    if(confirm("¿Reiniciar Mazo?")) stackCenter();
+  if(isMobile){ requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
+    return;
+  }
+  stackCenter();
+  if(isMobile){ requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
+});
+btnDeal.addEventListener("click", dealRandom);
+btnDraw.addEventListener("click", drawOne);
+btnMove.addEventListener("click", () => {
+  moverOn = !moverOn;
+  btnMove.classList.toggle("active", moverOn);
+});
+
+/* ===== v6-7 mobile zone buttons: send current card ===== */
+function sendTopTo(zone){
+  if(!isMobile) return;
+  const p = activePiece || deckTop();
+  if(!p) return;
+  if((mobileZone.get(p)||'z1')!=='z1') return;
+  if(!isTopCard(p)) return;
+  
+
+  if(zone === 'read'){
+    zPending = zPending.filter(x=>x!==p);
+    if(!zRead.includes(p)) zRead.push(p);
+    setZone(p,'read');
+  }else{
+    zRead = zRead.filter(x=>x!==p);
+    if(!zPending.includes(p)) zPending.push(p);
+    setZone(p,'pending');
+  }
+  syncCounts();
+  p.ts = 1;
+  clearHudZones();
+  closeHUDsMobile();
+  layoutMobileZones();
+  normalizeZone1Stack();
+}
+
+document.addEventListener('click', (e)=>{
+  if(!isMobile) return;
+  const br = document.getElementById('btnZoneRead');
+  const bp = document.getElementById('btnZonePending');
+  if(br && e.target === br){ e.stopPropagation(); sendTopTo('read'); }
+  if(bp && e.target === bp){ e.stopPropagation(); sendTopTo('pending'); }
+}, true);
+/* ===== end v6-7 zone buttons ===== */
+
+btnFrame.addEventListener("click", () => {
+  closeAllHUD();
+  clearSelection();
+
+  if(isMobile){
+    zRead=[]; zPending=[];
+    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1;  p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
+    zTop = 10 + pieces.length + 10;
+    syncCounts();
+    scale=1; panX=0; panY=0;
+    updateBgMetrics();
+    updateView();
+    requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); });
+    return;
+  }
+  scale = homeScale;
+  panX = 0;
+  panY = 0;
+  updateView();
+});
+
+/* CLICK OUTSIDE closes HUDs */
+document.addEventListener("pointerdown", (e)=>{
+  if(e.target.closest("header")) return;
+  if(e.target.closest(".piece")) return;
+  closeAllHUD();
+  clearSelection();
+  if(isMobile){
+    // v6-7: outside click hides HUD zones
+    clearHudZones();
+    return;
+  }
+}, {capture:true});
+
+/* PAN (clamped to BG) */
+let panning=false, psx=0, psy=0, basePanX=0, basePanY=0, pid=null;
+stage.addEventListener("pointerdown", e=>{
+  if(isMobile) return;
+  if(e.target.closest(".card")) return;
+  panning=true;
+  stage.classList.add("panning");
+  psx = e.clientX; psy = e.clientY;
+  basePanX = panX; basePanY = panY;
+  pid = e.pointerId;
+});
+window.addEventListener("pointermove", e=>{
+  if(!panning || e.pointerId!==pid) return;
+  panX = basePanX + (e.clientX-psx);
+  panY = basePanY + (e.clientY-psy);
+  updateView();
+});
+window.addEventListener("pointerup", e=>{
+  if(e.pointerId!==pid) return;
+  panning=false;
+  stage.classList.remove("panning");
+});
+
+/* ZOOM to cursor (locked minScale) */
+stage.addEventListener("wheel", e=>{
+  if(isMobile) return;
+  e.preventDefault();
+  const rect = stage.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const baseX = panX;
+  const baseY = panY;
+
+  const worldX = (mx - baseX) / scale;
+  const worldY = (my - baseY) / scale;
+
+  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  const newScale = Math.max(minScale, Math.min(maxScale, scale*factor));
+
+  const newBaseX = mx - worldX * newScale;
+  const newBaseY = my - worldY * newScale;
+  panX = newBaseX; panY = newBaseY;
+  scale = newScale;
+  updateView();
+},{passive:false});
+
+
+/* PINCH ZOOM (mobile) */
+const pointers = new Map(); // id -> {x,y}
+let pinchStartDist = 0;
+let pinchStartScale = 1;
+let pinchWorldX = 0;
+let pinchWorldY = 0;
+
+function dist(a,b){
+  const dx = a.x-b.x, dy = a.y-b.y;
+  return Math.hypot(dx,dy);
+}
+function mid(a,b){
+  return {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+}
+
+stage.addEventListener("pointerdown", e=>{
+  if(isMobile) return; // v6-4: lock camera on mobile
+  // Ignore touches that start on cards to avoid confusing zoom/drag.
+  if(e.target.closest(".card")) return;
+  pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  // prevent default touch scrolling on mobile
+  if(isMobile) e.preventDefault();
+
+  // If the user puts a second finger down, initialize pinch immediately.
+  if(pointers.size === 2){
+    const [a,b] = Array.from(pointers.values());
+    pinchStartDist = dist(a,b);
+    pinchStartScale = scale;
+
+    const m = mid(a,b);
+    const rect = stage.getBoundingClientRect();
+    const mx = m.x - rect.left;
+    const my = m.y - rect.top;
+    pinchWorldX = (mx - panX) / scale;
+    pinchWorldY = (my - panY) / scale;
+  }
+},{passive:false});
+
+stage.addEventListener("pointermove", e=>{
+  if(isMobile) return; // v6-4: lock camera on mobile
+  if(!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+  if(pointers.size === 2){
+    // stop single-finger panning while pinching
+    panning = false;
+    stage.classList.remove("panning");
+
+    const [a,b] = Array.from(pointers.values());
+    const m = mid(a,b);
+    const rect = stage.getBoundingClientRect();
+    const mx = m.x - rect.left;
+    const my = m.y - rect.top;
+
+    const d = dist(a,b);
+    // pinchStartDist is initialized on the second finger down.
+    const factor = d / Math.max(1e-6, pinchStartDist);
+    const newScale = Math.max(minScale, Math.min(maxScale, pinchStartScale * factor));
+
+    const newBaseX = mx - pinchWorldX * newScale;
+    const newBaseY = my - pinchWorldY * newScale;
+    panX = newBaseX; panY = newBaseY;
+    scale = newScale;
+    updateView();
+  }
+},{passive:false});
+
+window.addEventListener("pointerup", e=>{
+  pointers.delete(e.pointerId);
+  if(pointers.size < 2){
+    pinchStartDist = 0;
+  }
+});
+window.addEventListener("pointercancel", e=>{
+  pointers.delete(e.pointerId);
+  pinchStartDist = 0;
+});
+
+/* LOOP */
+function tick(){
+  const t = performance.now()*0.002;
+  for(const p of pieces){
+    if(moverOn && !p.dragging){
+      const ok = readMode ? readPile.includes(p) : !readPile.includes(p);
+      if(ok){
+if(isMobile){
+        p.tx = p.baseTx + Math.sin(t + p.phase) * 10;
+        p.ty = p.baseTy + Math.cos(t*0.9 + p.phase*1.3) * 10;
+      }
+    }else{
+        p.tx += Math.sin(t + p.phase) * 0.35;
+        p.ty += Math.cos(t*0.9 + p.phase*1.3) * 0.35;
+      }
+    }
+    if(isMobile && p.dragging){
+      p.x = p.tx;
+      p.y = p.ty;
+    }else{
+      p.x += (p.tx - p.x) * (isMobile ? 0.75 : 0.15);
+      p.y += (p.ty - p.y) * (isMobile ? 0.75 : 0.15);
+    }
+    p.s += (p.ts - p.s) * 0.35;
+    p.el.style.transform = `translate(${p.x}px,${p.y}px) scale(${p.s})`;
+  }
+  requestAnimationFrame(tick);
+}
+tick();
+updateBgMetrics();
+updateView();
+if(isMobile){ requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
+
+window.addEventListener("resize", ()=>{
+  updateBgMetrics();
+  updateView();
+});
+
+/* ===== v3-5: header micro-animations ===== */
+document.querySelectorAll("header .hdrBtn .lbl").forEach(l => {
+  l.setAttribute("data-txt", l.textContent.trim());
+});
+
+(function headerGlitchLoop(){
+  const btns = Array.from(document.querySelectorAll("header .hdrBtn"));
+  if(!btns.length) return;
+  setInterval(() => {
+    const b = btns[(Math.random()*btns.length)|0];
+    b.classList.add("glitch");
+    setTimeout(()=>b.classList.remove("glitch"), 260);
+  }, 4200);
+})();
+/* ===== end v3-5 ===== */
+
+
+/* ===== v5-1: FX overlay (dust + lights) ===== */
+(() => {
+  const cShade  = document.getElementById('shade');
+  const cLight  = document.getElementById('lightMap');
+  const cDust   = document.getElementById('dust');
+  if(!cShade || !cLight || !cDust) return;
+
+  const ctxS = cShade.getContext('2d', {alpha:true});
+  const ctxL = cLight.getContext('2d', {alpha:true});
+  const ctxD = cDust.getContext('2d', {alpha:true});
+
+  let W=0,H=0,dpr=1;
+
+  const rand=(a,b)=>a+Math.random()*(b-a);
+
+  function resize(){
+    // cap DPR to keep perf stable while still looking crisp
+    dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    W = Math.floor(innerWidth*dpr);
+    H = Math.floor(innerHeight*dpr);
+    [cShade,cLight,cDust].forEach(c=>{ c.width=W; c.height=H; });
+  }
+  addEventListener('resize', resize, {passive:true});
+  resize();
+
+  /* ===== Slow Lights (white + teal) ===== */
+  const lights=[];
+  function seedLights(n=16){
+    lights.length=0;
+    for(let i=0;i<n;i++){
+      const speed=rand(0.000010, 0.000028);
+      const ang=rand(0,Math.PI*2);
+      lights.push({
+        x: rand(0.06,0.94),
+        y: rand(0.08,0.92),
+        vx: Math.cos(ang)*speed,
+        vy: Math.sin(ang)*speed*0.75,
+        r:  rand(0.15,0.32),
+        hue: (Math.random()<0.52) ? 'teal' : 'white',
+        phase: rand(0,Math.PI*2),
+        pulse: rand(0.8,1.7),
+        wob: rand(0.6,1.6),
+        intensity: rand(0.8,1.35),
+      });
+    }
+  }
+  seedLights();
+
+  function stepLights(t, dt){
+    for(const L of lights){
+      const ax = 0.00000002 * Math.sin(t*0.00035*L.wob + L.phase);
+      const ay = 0.00000002 * Math.cos(t*0.00031*L.wob + L.phase*1.3);
+      L.vx += ax; L.vy += ay;
+
+      const vmax = 0.000055;
+      L.vx = Math.max(-vmax, Math.min(vmax, L.vx));
+      L.vy = Math.max(-vmax, Math.min(vmax, L.vy));
+
+      L.x += L.vx * dt;
+      L.y += L.vy * dt;
+
+      if(L.x < -0.08) L.x = 1.08;
+      if(L.x >  1.08) L.x = -0.08;
+      if(L.y < -0.08) L.y = 1.08;
+      if(L.y >  1.08) L.y = -0.08;
+    }
+  }
+
+  /* ===== Constant Dust Movement ===== */
+  const dust=[];
+  function seedDust(n=520){
+    dust.length=0;
+    for(let i=0;i<n;i++){
+      dust.push({
+        x: Math.random(),
+        y: Math.random(),
+        z: rand(0.25, 1.35),
+        r: rand(0.55, 2.3),
+        vx: rand(-0.00004,0.00004),
+        vy: rand(-0.00003,0.00003),
+        ph: rand(0, Math.PI*2),
+        tw: rand(0.8, 2.1),
+      });
+    }
+  }
+  seedDust();
+
+  function drawLighting(t){
+    ctxL.clearRect(0,0,W,H);
+
+    ctxS.clearRect(0,0,W,H);
+    ctxS.globalCompositeOperation='source-over';
+    ctxS.fillStyle='rgba(0,0,0,0.93)';
+    ctxS.fillRect(0,0,W,H);
+    ctxS.globalCompositeOperation='destination-out';
+
+    for(const L of lights){
+      const px=L.x*W, py=L.y*H;
+      const pr=L.r*Math.min(W,H);
+      const pulse = 0.60 + 0.40*Math.sin(t*0.0018*L.pulse + L.phase);
+      const I = 0.92 * L.intensity * pulse;
+
+      const col = (L.hue==='teal')
+        ? `rgba(45,212,191,${I})`
+        : `rgba(255,255,255,${I})`;
+
+      const g=ctxL.createRadialGradient(px,py,0,px,py,pr);
+      g.addColorStop(0, col);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctxL.fillStyle=g;
+      ctxL.beginPath(); ctxL.arc(px,py,pr,0,Math.PI*2); ctxL.fill();
+
+      const holeR = pr*1.18;
+      const gs=ctxS.createRadialGradient(px,py,0,px,py,holeR);
+      gs.addColorStop(0,'rgba(0,0,0,0.99)');
+      gs.addColorStop(0.30,'rgba(0,0,0,0.65)');
+      gs.addColorStop(1,'rgba(0,0,0,0)');
+      ctxS.fillStyle=gs;
+      ctxS.beginPath(); ctxS.arc(px,py,holeR,0,Math.PI*2); ctxS.fill();
+    }
+
+    ctxS.globalCompositeOperation='source-over';
+  }
+
+  function drawDust(t, dt){
+    ctxD.clearRect(0,0,W,H);
+
+    for(const p of dust){
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+
+      if(p.x < -0.12) p.x = 1.12;
+      if(p.x >  1.12) p.x = -0.12;
+      if(p.y < -0.12) p.y = 1.12;
+      if(p.y >  1.12) p.y = -0.12;
+
+      const px=p.x*W, py=p.y*H;
+      const pr=p.r*dpr*(0.65+p.z);
+      const tw = 0.35 + 0.65*Math.sin(t*0.0019*p.tw + p.ph);
+      const a = (0.10 + 0.22*tw) * Math.min(1.0, 0.80*p.z);
+
+      const g = ctxD.createRadialGradient(px,py,0,px,py,pr*7.4);
+      g.addColorStop(0, `rgba(220,240,255,${a})`);
+      g.addColorStop(0.35, `rgba(180,220,255,${a*0.55})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctxD.fillStyle=g;
+      ctxD.beginPath(); ctxD.arc(px,py,pr*7.4,0,Math.PI*2); ctxD.fill();
+    }
+  }
+
+  let last=performance.now();
+  function loop(t){
+    const dt = Math.min(50, t-last);
+    last = t;
+
+    stepLights(t, dt);
+    drawLighting(t);
+    drawDust(t, dt);
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+ /* ===== end v5-1 FX ===== */
+
+
+</script>
+
+</body>
+</html>
