@@ -1,6 +1,6 @@
 {
-  "version": "v25",
-  "exportedAt": "2026-02-12T00:18:16.313Z",
+  "version": "builder_v38",
+  "exportedAt": "2026-02-13T11:40:16.609Z",
   "cards": [
     {
       "num": "#001",
@@ -9,11 +9,11 @@
       "hud": "002 - FRAME 3.jpg",
       "hudCrop": {
         "x": 0,
-        "y": 67,
+        "y": 32,
         "scale": 1
       },
       "hudText": "Jason Peters despierta sentado en un extraño dispositivo... ¿porqué está ahí?",
-      "url": "https://example.com"
+      "url": "https://www.disturbingstories.com/002.html"
     },
     {
       "num": "#002",
@@ -26,7 +26,7 @@
         "scale": 1
       },
       "hudText": "Hace pocos días, ocurrió un incidente sorprendente en la ciudad, que nos relata la joven Susan Waters...",
-      "url": "https://example.com"
+      "url": "https://www.disturbingstories.com/004.html"
     },
     {
       "num": "#003",
@@ -39,7 +39,7 @@
         "scale": 1
       },
       "hudText": "Llega la Navidad....esa maravillosa época del año donde los sueños se hacen realidad…",
-      "url": "https://example.com"
+      "url": "https://www.disturbingstories.com/010.html"
     },
     {
       "num": "#004",
@@ -52,7 +52,7 @@
         "scale": 1
       },
       "hudText": "Acompaña al coronel James Cunningham en un vuelo de prueba con los nuevos motores Icarus...",
-      "url": "https://example.com"
+      "url": "https://www.disturbingstories.com/012.html"
     },
     {
       "num": "#005",
@@ -65,7 +65,7 @@
         "scale": 1
       },
       "hudText": "Año 2486. Colonia 35. Luna Xena.",
-      "url": "https://example.com"
+      "url": "https://www.disturbingstories.com/014.html"
     }
   ]
 }
