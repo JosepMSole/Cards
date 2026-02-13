@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Deck v4-2</title>
+<title>Deck v4-3</title>
 
 <style>
 :root{
@@ -227,7 +227,12 @@ header button.hdrBtn.active{
 
 #bg{
   position:absolute;
-  inset:0;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+  transform-origin:0 0;
+  will-change:transform;
   z-index:0;
   pointer-events:none;
   background:
@@ -239,6 +244,7 @@ header button.hdrBtn.active{
 /* CARD */
 .piece{
   position:absolute;
+  z-index:1;
   width:var(--cardW);
   height:var(--cardH);
   perspective:1200px;
@@ -457,6 +463,7 @@ header button.hdrBtn.active{
 <script>
 const viewport = document.getElementById("viewport");
 const stage = document.getElementById("stage");
+const bg = document.getElementById("bg");
 const totalEl = document.getElementById("total");
 
 const btnDeck  = document.getElementById("btnDeck");
@@ -472,23 +479,55 @@ let pieces = [];
 let selectedPiece = null;
 let scale = 1, panX = 0, panY = 0;
 let minScale = isMobile ? 0.6 : 1;          // allow more zoom-out on mobile
-let homeScale = isMobile ? 1.0 : 1;         // initial framing (closer than minScale)
+let homeScale = isMobile ? 1.0 : 1;
+
+// BG overscan so it never reveals black margins, while still moving with zoom.
+let bgBaseW = 0, bgBaseH = 0, bgOffX = 0, bgOffY = 0;
+function updateBgMetrics(){
+  const rect = stage.getBoundingClientRect();
+  // Make BG large enough so that even at minScale it still covers the stage.
+  const overscan = 1.06; // small safety margin
+  bgBaseW = rect.width / Math.max(0.0001, minScale) * overscan;
+  bgBaseH = rect.height / Math.max(0.0001, minScale) * overscan;
+
+  // Center the BG around the stage at pan=0.
+  bgOffX = -(bgBaseW - rect.width) / 2;
+  bgOffY = -(bgBaseH - rect.height) / 2;
+
+  bg.style.width = bgBaseW + "px";
+  bg.style.height = bgBaseH + "px";
+  bg.style.left = "0px";
+  bg.style.top = "0px";
+}
+         // initial framing (closer than minScale)
 let moverOn = false;
 let zTop = 10;
 
 function clampPan(){
+  // Clamp based on BG bounds so we never expose black margins.
   const rect = stage.getBoundingClientRect();
   const w = rect.width;
   const h = rect.height;
-  const minPanX = w - w * scale;
-  const minPanY = h - h * scale;
-  panX = Math.min(0, Math.max(minPanX, panX));
-  panY = Math.min(0, Math.max(minPanY, panY));
+
+  if(!bgBaseW || !bgBaseH) updateBgMetrics();
+
+  const bgW = bgBaseW * scale;
+  const bgH = bgBaseH * scale;
+
+  // BG screen-space left/top is (pan + bgOff). Keep left<=0 and right>=w (same for Y).
+  const minPanX = w - (bgOffX + bgW);
+  const maxPanX = -bgOffX;
+  const minPanY = h - (bgOffY + bgH);
+  const maxPanY = -bgOffY;
+
+  panX = Math.min(maxPanX, Math.max(minPanX, panX));
+  panY = Math.min(maxPanY, Math.max(minPanY, panY));
 }
 
 function updateView(){
   clampPan();
   viewport.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+  bg.style.transform = `translate(${panX + bgOffX}px,${panY + bgOffY}px) scale(${scale})`;
 }
 
 function clearSelection(){
@@ -794,9 +833,25 @@ function mid(a,b){
 }
 
 stage.addEventListener("pointerdown", e=>{
+  // Ignore touches that start on cards to avoid confusing zoom/drag.
+  if(e.target.closest(".piece")) return;
   pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
   // prevent default touch scrolling on mobile
   if(isMobile) e.preventDefault();
+
+  // If the user puts a second finger down, initialize pinch immediately.
+  if(pointers.size === 2){
+    const [a,b] = Array.from(pointers.values());
+    pinchStartDist = dist(a,b);
+    pinchStartScale = scale;
+
+    const m = mid(a,b);
+    const rect = stage.getBoundingClientRect();
+    const mx = m.x - rect.left;
+    const my = m.y - rect.top;
+    pinchWorldX = (mx - panX) / scale;
+    pinchWorldY = (my - panY) / scale;
+  }
 },{passive:false});
 
 stage.addEventListener("pointermove", e=>{
@@ -815,16 +870,8 @@ stage.addEventListener("pointermove", e=>{
     const my = m.y - rect.top;
 
     const d = dist(a,b);
-    if(!pinchStartDist){
-      pinchStartDist = d;
-      pinchStartScale = scale;
-
-      pinchWorldX = (mx - panX) / scale;
-      pinchWorldY = (my - panY) / scale;
-      return;
-    }
-
-    const factor = d / pinchStartDist;
+    // pinchStartDist is initialized on the second finger down.
+    const factor = d / Math.max(1e-6, pinchStartDist);
     const newScale = Math.max(minScale, Math.min(maxScale, pinchStartScale * factor));
 
     panX = mx - pinchWorldX * newScale;
@@ -860,7 +907,13 @@ function tick(){
   requestAnimationFrame(tick);
 }
 tick();
+updateBgMetrics();
 updateView();
+
+window.addEventListener("resize", ()=>{
+  updateBgMetrics();
+  updateView();
+});
 
 /* ===== v3-5: header micro-animations ===== */
 document.querySelectorAll("header .hdrBtn .lbl").forEach(l => {
