@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-21</title>
+<title>DECK 6-22</title>
 
 <style>
 :root{
@@ -974,30 +974,22 @@ header button.hdrBtn.active{
 /* ===== end v6-15 ===== */
 
 
-/* ===== v6-21 DESKTOP LEÍDAS + HEADER ===== */
+/* ===== v6-22 DESKTOP adjustments ===== */
 #readArea{ height:360px !important; }
-#readArea .readSlot{ inset:16px 16px 86px 16px !important; } /* leave room for bottom button */
+#readArea .readSlot{ inset:16px 16px 86px 16px !important; }
 #btnReadArea{
   position:absolute !important;
   left:50% !important;
   transform:translateX(-50%) !important;
-  bottom:16px !important;
   top:auto !important;
+  bottom:16px !important;
   width:88% !important;
 }
-.piece.inReadPile{ pointer-events:none !important; } /* no interaction while stacked in LEÍDAS */
-.miniCountDesk{
-  display:flex;
-  align-items:center;
-  padding:10px 14px;
-  border-radius:14px;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.16);
-  font-weight:900;
-  gap:8px;
-}
-.miniCountDesk .num{ font-size:1.55em; font-weight:1000; }
-/* ===== end v6-21 ===== */
+.piece.inReadPile{ pointer-events:none !important; }
+/* Ensure pile cards render above blur */
+#readArea{ z-index:3 !important; }
+#viewport{ z-index:5 !important; }
+/* ===== end v6-22 ===== */
 
 </style>
 </head>
@@ -1006,7 +998,7 @@ header button.hdrBtn.active{
 <header>
 <button id="btnDeck" class="hdrBtn"><span class="ico" aria-hidden="true">🂠</span><span class="lbl">MAZO</span></button>
 <button id="btnDraw" class="hdrBtn"><span class="ico" aria-hidden="true">🎴</span><span class="lbl">1 CARTA</span></button>
-<button id="btnFlipAll" class="hdrBtn"><span class="ico" aria-hidden="true">🔄</span><span class="lbl">GIRAR</span></button>
+    <button id="btnFlipAll" class="hdrBtn" title="GIRAR"><span class="ico" aria-hidden="true">🔄</span><span class="lbl">GIRAR</span></button>
 <button id="btnDeal" class="hdrBtn"><span class="ico" aria-hidden="true">🃏</span><span class="lbl">REPARTIR</span></button>
 <button id="btnMove" class="hdrBtn"><span class="ico" aria-hidden="true">🌀</span><span class="lbl">MOVER</span></button>
 <button id="btnFrame" class="hdrBtn"><span class="ico" aria-hidden="true">🎯</span><span class="lbl">ENCUADRAR</span></button>
@@ -1295,49 +1287,42 @@ function showHudZonesFor(p){
 let maxScale = isMobile ? 1.0 : 2.5;
 
 let pieces = [];
-function activePieces(){ return isMobile ? pieces : (readMode ? readPile : tablePieces()); }
-
-// ===== v6-21 DESKTOP: LEÍDAS zone + mode (clean) =====
-let initialTotal = 0;
-
-let readPile = [];          // pieces stored in LEÍDAS
+// ===== v6-12 DESKTOP read mode =====
+let readPile = [];          // pieces stored in read area
 let readMode = false;
-let parked = new Map();     // piece -> {tx,ty,ts,zIndex}
-
-function setTotalFixed(){
-  if(!initialTotal) return;
-  const totalEl = document.getElementById("total");
-  if(totalEl) totalEl.innerHTML = `TOTAL: <span class="num">${initialTotal}</span>`;
-}
-function updateLeidasHeader(){
-  const lh = document.getElementById("leidasHeader");
-  if(lh) lh.querySelector(".num").textContent = String(readPile.length);
-}
-
+let parked = new Map();     // piece -> {tx,ty,ts,zIndex,rot,flip}
 function tablePieces(){
-  // Cards on the table excluding LEÍDAS stacked pile
   return pieces.filter(p => !readPile.includes(p));
 }
-function headerPieces(){
-  // In readMode operate only on visible readPile, else only table cards
-  return (readMode ? readPile : tablePieces());
+function activePieces(){
+  // Normal mode: only cards on the table (excluding LEÍDAS pile).
+  // Read mode: only LEÍDAS cards (other cards are parked/off-screen).
+  return readMode ? readPile : tablePieces();
 }
-
-function readSlotRect(){
-  const slot = document.querySelector("#readArea .readSlot");
-  return slot ? slot.getBoundingClientRect() : null;
+function setTotalCount(n){
+  const totalEl = document.getElementById("total");
+  if(!totalEl) return;
+  const v = (initialTotal || n);
+  totalEl.innerHTML = `TOTAL: <span class="num">${v}</span>`;
+}
+function updateTotalForMode(){
+  setTotalCount(activePieces().length);
+}
+function readAreaRects(){
+  const ra = document.getElementById("readArea");
+  if(!ra) return null;
+  return ra.getBoundingClientRect();
 }
 function inRect(x,y,r){ return r && x>=r.left && x<=r.right && y>=r.top && y<=r.bottom; }
 
 function layoutReadPileStack(){
-  const slot = document.querySelector("#readArea .readSlot");
-  if(!slot) return;
-
+  const ra = document.getElementById("readArea");
+  if(!ra) return;
   const s = stage.getBoundingClientRect();
-  const r = slot.getBoundingClientRect();
+  const r = ra.getBoundingClientRect();
   const cs = getComputedStyle(document.documentElement);
-  const cardW = parseFloat(cs.getPropertyValue("--cardW")) || 175;
-  const cardH = parseFloat(cs.getPropertyValue("--cardH")) || 246;
+  const cardW = parseFloat(cs.getPropertyValue("--cardW")) || 110;
+  const cardH = parseFloat(cs.getPropertyValue("--cardH")) || 160;
 
   const worldLeft = (r.left - s.left - panX)/scale;
   const worldTop  = (r.top  - s.top  - panY)/scale;
@@ -1347,110 +1332,147 @@ function layoutReadPileStack(){
   const baseX = worldLeft + (worldW - cardW)/2;
   const baseY = worldTop  + (worldH - cardH)/2;
 
-  const off = 7;
+  const off = 6;
   readPile.forEach((p,i)=>{
     p.tx = baseX + i*off;
     p.ty = baseY + i*off*0.55;
     p.ts = 1;
-    p.el.style.zIndex = String(950 + i);  // above blur
+    p.el.style.zIndex = String(950 + i);
   });
-}
-
-function addToReadPile(p){
-  if(readPile.includes(p)) return;
-  readPile.push(p);
-  p.el.classList.add("inReadPile");
-  p.el.classList.remove("hudOpen");
-  updateLeidasHeader();
-  layoutReadPileStack();
-}
-function removeFromReadPile(p){
-  const i = readPile.indexOf(p);
-  if(i<0) return;
-  readPile.splice(i,1);
-  p.el.classList.remove("inReadPile");
-  updateLeidasHeader();
 }
 
 function enterReadMode(){
   if(readMode) return;
   readMode = true;
-
   const back = document.getElementById("btnReadBack");
   if(back) back.style.display = "block";
 
-  // Allow interactions while in readMode
-  readPile.forEach(p => p.el.classList.remove("inReadPile"));
-
-  // Park non-read cards off-screen (hidden)
+  // park non-read cards
   for(const p of pieces){
+    if(p.el.classList.contains('parked')) continue;
     if(readPile.includes(p)) continue;
-    if(p.el.classList.contains("parked")) continue;
     parked.set(p, {tx:p.tx, ty:p.ty, ts:p.ts, zIndex:p.el.style.zIndex});
     p.el.classList.add("parked");
   }
-
-  // Spread read cards on the table for inspection
-  const cs = getComputedStyle(document.documentElement);
-  const w = parseFloat(cs.getPropertyValue("--cardW")) || 175;
-  const h = parseFloat(cs.getPropertyValue("--cardH")) || 246;
+  // deploy read pile into a spread
+  const {w,h} = getCardWH ? getCardWH() : {w:120,h:170};
   const cols = Math.max(1, Math.floor((stage.clientWidth - 60)/(w*1.05)));
   readPile.forEach((p,i)=>{
     p.el.classList.remove("parked");
     const col = i % cols;
     const row = Math.floor(i/cols);
     p.tx = (30 + col*(w*1.05) - panX)/scale;
-    p.ty = (90 + row*(h*0.92) - panY)/scale;
+    p.ty = (90 + row*(h*0.90) - panY)/scale;
     p.el.style.zIndex = String(900 + i);
-    p.ts = 1;
   });
+
+  updateTotalForMode();
 }
 
 function exitReadMode(){
   if(!readMode) return;
   readMode = false;
-
   const back = document.getElementById("btnReadBack");
   if(back) back.style.display = "none";
-
-  // Restore parked cards
+  // restore parked cards
   for(const [p, st] of parked.entries()){
     p.el.classList.remove("parked");
     p.tx = st.tx; p.ty = st.ty; p.ts = st.ts;
-    if(st.zIndex!=null) p.el.style.zIndex = st.zIndex;
+    if(st.zIndex!==undefined) p.el.style.zIndex = st.zIndex;
   }
   parked.clear();
+  // restack read pile
+  layoutReadPileStack();
+        updateTotalForMode();
+  updateTotalForMode();
+}
+// ===== end v6-12 =====
 
-  // Re-stack read pile and disable interactions
-  readPile.forEach(p => p.el.classList.add("inReadPile"));
+// ===== v6-13 wiring (desktop read area + mode) =====
+function tablePieces(){
+  // pieces that are NOT in the LEÍDAS zone
+  return pieces.filter(p => !readPile.includes(p));
+}
+
+function updateReadCounts(){
+  const lh = document.getElementById('leidasHeader');
+  if(lh) lh.querySelector('.num').textContent = String(readPile.length);
+
+  const le = document.getElementById("leidasCount");
+  if(le) le.querySelector(".num").textContent = String(readPile.length);
+  updateTotalForMode();
+}
+
+function addToReadPile(p){
+  if(readPile.includes(p)) return;
+  readPile.push(p);
+  p.el.classList.add("inReadPile");
+  p.el.classList.add('inReadPile');
+  closeAllHUD();
+  clearSelection();
+  updateReadCounts();
   layoutReadPileStack();
 }
 
-window.addEventListener("DOMContentLoaded", ()=>{
-  const btnEnter = document.getElementById("btnReadArea");
-  const btnBack  = document.getElementById("btnReadBack");
-  const area     = document.getElementById("readArea");
+function removeFromReadPile(p){
+  const i = readPile.indexOf(p);
+  if(i>=0){
+    readPile.splice(i,1);
+    p.el.classList.remove("inReadPile");
+    p.el.classList.remove('inReadPile');
+    updateReadCounts();
+  }
+}
 
-  if(btnEnter) btnEnter.addEventListener("click", (e)=>{
+function isInReadArea(clientX, clientY){
+  const ra = readAreaRects();
+  return inRect(clientX, clientY, ra);
+}
+
+// Click on read area enters mode
+window.addEventListener("DOMContentLoaded", ()=>{
+  const ra = document.getElementById("readArea");
+  const bEnter = document.getElementById("btnReadArea");
+  const bBack = document.getElementById("btnReadBack");
+  if(ra) ra.addEventListener("click", (e)=>{
     if(isMobile) return;
-    e.stopPropagation();
+    if(readMode) return;
+    // ignore if clicking on a card over the area
+    if(e.target.closest(".piece")) return;
     enterReadMode();
   });
-  if(btnBack) btnBack.addEventListener("click", (e)=>{
+  if(bEnter) bEnter.addEventListener("click", (e)=>{
+    if(isMobile) return;
+    e.stopPropagation();
+    if(!readMode) enterReadMode();
+  });
+  if(bBack) bBack.addEventListener("click", (e)=>{
     if(isMobile) return;
     e.stopPropagation();
     exitReadMode();
   });
-
-  // Clicking blur area (not a card) also enters read mode
-  if(area) area.addEventListener("click", (e)=>{
-    if(isMobile) return;
-    if(readMode) return;
-    if(e.target.closest(".piece")) return;
-    enterReadMode();
-  });
 });
-// ===== end v6-21 =====
+
+// When exiting mode, ensure counts/stack are correct
+const __exitReadMode = exitReadMode;
+exitReadMode = function(){
+  __exitReadMode();
+  // v6-15: stacked read pile disables HUDs
+  readPile.forEach(p=>p.el.classList.add('inReadPile'));
+  layoutReadPileStack();
+  updateReadCounts();
+};
+
+// Adjust enterReadMode to show back and ensure other cards are really off-screen (parked)
+const __enterReadMode = enterReadMode;
+enterReadMode = function(){
+  __enterReadMode();
+  // v6-15: allow HUDs while inspecting in readMode
+  readPile.forEach(p=>p.el.classList.remove('inReadPile'));
+  updateReadCounts();
+};
+
+// ===== end v6-13 wiring =====
 
 
 let selectedPiece = null;
@@ -1656,17 +1678,26 @@ function createPiece(meta){
     p.dragging = false;
     // v6-15 desktop drop to read area / remove (only when NOT in readMode)
     if(!isMobile && !readMode){
-      const slot = readSlotRect();
-      const inside = inRect(e.clientX, e.clientY, slot);
+      const inside = isInReadArea(e.clientX, e.clientY);
       const inPile = readPile.includes(p);
       if(inside){
         addToReadPile(p);
+        layoutReadPileStack();
       }else if(inPile){
+        // dragged out -> remove from pile and keep on table
         removeFromReadPile(p);
         p.el.style.zIndex = String(++zTop);
       }
     }
-    // v6-21 desktop drop/remove read pile
+    // v6-15 desktop remove from read area
+
+    if(!isMobile && !readMode){
+      const r = readAreaRects();
+      if(inRect(e.clientX, e.clientY, r)){
+        if(!readPile.includes(p)) readPile.push(p);
+        layoutReadPileStack();
+        updateTotalForMode();
+      }
     }
 
     if(isMobile){
@@ -1778,8 +1809,9 @@ function loadManifest(data){
   }
   data.cards.forEach((m)=>{ const p=createPiece(m); if(isMobile){ setZone(p,'z1'); } });
   if(!initialTotal) initialTotal = data.cards.length;
-  setTotalFixed();
-  updateLeidasHeader();
+  totalEl.innerHTML = `TOTAL: <span class="num">${initialTotal}</span>`;
+  const lh = document.getElementById('leidasHeader');
+  if(lh) lh.querySelector('.num').textContent = String(readPile.length);
   if(!isMobile){ updateTotalForMode(); }
   if(isMobile){ zRead=[]; zPending=[]; syncCounts(); requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
   stackCenter();
@@ -1793,7 +1825,6 @@ function stackCenter(){
   if(!isMobile){
     exitReadMode();
     readPile = [];
-    updateLeidasHeader();
   }
 
   if(!activePieces().length) return;
@@ -1899,7 +1930,6 @@ btnDeal.addEventListener("click", dealRandom);
 btnDraw.addEventListener("click", drawOne);
 
 function flipAllExceptRead(){
-  // v6-21: flip ALL cards except those in LEÍDAS
   pieces.filter(p=>!readPile.includes(p)).forEach(p=>p.card.classList.toggle("flipped"));
 }
 if(btnFlipAll) btnFlipAll.addEventListener("click", ()=>{ if(!isMobile) flipAllExceptRead(); });
@@ -2108,7 +2138,7 @@ function tick(){
   const t = performance.now()*0.002;
   for(const p of pieces){
     if(moverOn && !p.dragging){
-      // v6-21: move only table cards (exclude LEÍDAS)
+      // v6-22: move only table cards (exclude LEÍDAS pile)
       if(!readPile.includes(p)){
         p.tx += Math.sin(t + p.phase) * 0.35;
         p.ty += Math.cos(t*0.9 + p.phase*1.3) * 0.35;
