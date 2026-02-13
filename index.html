@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-3</title>
+<title>DECK 6-4</title>
 
 <style>
 :root{
@@ -555,14 +555,42 @@ header button.hdrBtn.active{
 
 
 
-/* ===== v6-3 MOBILE ZONE SYSTEM ===== */
-@media (max-width:768px){
+/* ===== v6-4 MOBILE HEADER (reduce + 2 rows) ===== */
+.miniCount{ display:none; padding:10px 14px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); font-weight:900; }
+.miniCount .num{ font-size:1.35em; font-weight:1000; margin-left:6px; }
 
-  /* Lock zoom & pan visually */
-  #stage{ touch-action:none; }
-  
-  /* Center zone container */
-  #mobileZones{
+@media (max-width:768px){
+  header{
+    height:112px;
+    padding:6px 10px 6px;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+    column-gap:8px;
+    row-gap:4px;
+  }
+  header button.hdrBtn{
+    padding:7px 9px;
+    border-radius:14px;
+    font-size:12px;
+    gap:8px;
+  }
+  #btnDeal, #btnFrame{ display:none !important; }
+  #total, #leidasCount, #pendientesCount{ display:flex; align-items:center; }
+  #total, #leidasCount, #pendientesCount{
+    padding:7px 9px;
+    border-radius:14px;
+    font-size:12px;
+    width:fit-content;
+  }
+  #total .num, #leidasCount .num, #pendientesCount .num{ font-size:1.55em; font-weight:900; }
+}
+/* ===== end v6-4 header ===== */
+
+
+/* ===== v6-4 MOBILE BOARD (3 zones centered) ===== */
+@media (max-width:768px){
+  #mobileBoard{
     position:absolute;
     left:50%;
     top:50%;
@@ -570,38 +598,78 @@ header button.hdrBtn.active{
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:20px;
-    z-index:5;
+    gap:22px;
+    z-index:4;
     pointer-events:none;
   }
-
-  #zoneStack{
-    width:var(--cardW);
-    height:calc(var(--cardH) * 2 + 20px);
+  #zoneRight{
     display:flex;
     flex-direction:column;
-    justify-content:space-between;
-    align-items:center;
-  }
-
-  .zoneBox{
-    width:120px;
-    height:60px;
-    border-radius:14px;
-    border:1px solid rgba(255,255,255,.25);
-    display:flex;
     align-items:center;
     justify-content:center;
-    font-weight:800;
-    font-size:12px;
-    background:rgba(0,0,0,.35);
+    gap:28px;
+  }
+  .zoneWrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
+  .slot{
+    width:calc(var(--cardW) * 1.10);
+    height:calc(var(--cardH) * 1.60);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(0,0,0,.10);
+    box-shadow:0 10px 30px rgba(0,0,0,.25) inset;
+  }
+  .slotDeck{
+    width:var(--cardW);
+    height:calc(var(--cardH) * 2 + 18px);
+    background:transparent;
+    border:0;
+    box-shadow:none;
   }
 
-  #zoneRead{ order:1; }
-  #zonePending{ order:2; }
-
+  .zoneLabel{
+    padding:10px 18px;
+    border-radius:18px;
+    font-weight:1000;
+    letter-spacing:.6px;
+    border:2px solid rgba(255,255,255,.75);
+    text-shadow:0 2px 0 rgba(0,0,0,.55);
+    box-shadow:0 10px 28px rgba(0,0,0,.35);
+    background:rgba(0,0,0,.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .zoneLabelRead{
+    background:linear-gradient(180deg, rgba(22,163,74,.85), rgba(22,163,74,.55));
+    border-color:rgba(255,255,255,.85);
+  }
+  .zoneLabelPending{
+    background:linear-gradient(180deg, rgba(220,38,38,.85), rgba(220,38,38,.55));
+    border-color:rgba(255,255,255,.85);
+  }
 }
-/* ===== end v6-3 mobile ===== */
+/* ===== end v6-4 board ===== */
+
+
+/* ===== v6-4 MOBILE HUD alignment by zone ===== */
+@media (max-width:768px){
+  .piece.z1 .hudInfo{
+    left:auto !important;
+    right:var(--cardW) !important;
+    transform-origin:top right !important;
+  }
+  .piece.zRead .hudInfo,
+  .piece.zPending .hudInfo{
+    left:var(--cardW) !important;
+    right:auto !important;
+    transform-origin:top left !important;
+  }
+}
+/* ===== end v6-4 hud alignment ===== */
 
 </style>
 </head>
@@ -614,20 +682,30 @@ header button.hdrBtn.active{
 <button id="btnMove" class="hdrBtn"><span class="ico" aria-hidden="true">🌀</span><span class="lbl">MOVER</span></button>
 <button id="btnFrame" class="hdrBtn"><span class="ico" aria-hidden="true">🎯</span><span class="lbl">ENCUADRAR</span></button>
 <div id="total">TOTAL: <span class="num">0</span></div>
+<div id="leidasCount" class="miniCount">LEÍDAS: <span class="num">0</span></div>
+<div id="pendientesCount" class="miniCount">PENDIENTES: <span class="num">0</span></div>
 </header>
-
-
-<div id="mobileZones">
-  <div id="zone1"></div>
-  <div id="zoneStack">
-    <div id="zoneRead" class="zoneBox">LEÍDAS</div>
-    <div id="zonePending" class="zoneBox">PENDIENTES</div>
-  </div>
-</div>
 
 <div id="stage">
   <div id="world">
     <div id="bg"></div>
+
+<div id="mobileBoard" aria-hidden="true">
+  <div id="zone1Slot" class="slot slotDeck"></div>
+
+  <div id="zoneRight">
+    <div id="zoneReadWrap" class="zoneWrap">
+      <div class="zoneLabel zoneLabelRead">LEÍDAS</div>
+      <div id="zoneReadSlot" class="slot slotRead"></div>
+    </div>
+
+    <div id="zonePendingWrap" class="zoneWrap">
+      <div id="zonePendingSlot" class="slot slotPending"></div>
+      <div class="zoneLabel zoneLabelPending">PENDIENTES</div>
+    </div>
+  </div>
+</div>
+
     <div id="viewport"></div>
   </div>
 </div>
@@ -653,21 +731,122 @@ const btnMove  = document.getElementById("btnMove");
 const btnFrame = document.getElementById("btnFrame");
 
 const isMobile = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
-let maxScale = isMobile ? 5.0 : 2.5;
+/* ===== v6-4 mobile zones state ===== */
+let mobileZone = new Map(); // piece -> "z1" | "read" | "pending"
+let zRead = [];
+let zPending = [];
+
+function qs(id){ return document.getElementById(id); }
+
+function getCardWH(){
+  const cs = getComputedStyle(document.documentElement);
+  return {
+    w: parseFloat(cs.getPropertyValue("--cardW")) || 78,
+    h: parseFloat(cs.getPropertyValue("--cardH")) || 110
+  };
+}
+
+function boardRects(){
+  const s = stage.getBoundingClientRect();
+  const r1 = qs("zone1Slot")?.getBoundingClientRect();
+  const rr = qs("zoneReadSlot")?.getBoundingClientRect();
+  const rp = qs("zonePendingSlot")?.getBoundingClientRect();
+  return {s, r1, rr, rp};
+}
+
+function pointInRect(x,y,r){
+  return !!r && x>=r.left && x<=r.right && y>=r.top && y<=r.bottom;
+}
+
+function setZone(p, z){
+  mobileZone.set(p, z);
+  p.el.classList.toggle("z1", z==="z1");
+  p.el.classList.toggle("zRead", z==="read");
+  p.el.classList.toggle("zPending", z==="pending");
+}
+
+function syncCounts(){
+  const le = document.getElementById("leidasCount");
+  const pe = document.getElementById("pendientesCount");
+  if(le) le.querySelector(".num").textContent = String(zRead.length);
+  if(pe) pe.querySelector(".num").textContent = String(zPending.length);
+}
+
+function layoutMobileZones(){
+  if(!isMobile) return;
+  const {w,h} = getCardWH();
+  const {s, r1, rr, rp} = boardRects();
+  if(!r1 || !rr || !rp) return;
+
+  const toWorld = (rect) => ({
+    x: rect.left - s.left,
+    y: rect.top  - s.top,
+    w: rect.width,
+    h: rect.height
+  });
+  const W1 = toWorld(r1);
+  const WR = toWorld(rr);
+  const WP = toWorld(rp);
+
+  const z1x = W1.x + (W1.w - w)/2;
+  const z1y = W1.y + (W1.h - h)/2;
+
+  pieces.forEach((p)=>{
+    const z = mobileZone.get(p) || "z1";
+    if(z === "z1"){
+      p.tx = z1x; p.baseTx = z1x;
+      p.ty = z1y; p.baseTy = z1y;
+    }
+  });
+
+  const stackIn = (arr, slot, baseTop=true) => {
+    const baseX = slot.x + 10;
+    const maxPerCol = Math.max(1, Math.floor((slot.h - 10) / (h*0.58)));
+    arr.forEach((p, i)=>{
+      const col = Math.floor(i / maxPerCol);
+      const row = i % maxPerCol;
+      const dx = col * (w*0.72);
+      const dy = row * (h*0.60);
+      const y = baseTop ? (slot.y + 8 + dy) : (slot.y + slot.h - h - 8 - dy);
+      p.tx = baseX + dx; p.baseTx = p.tx;
+      p.ty = y;         p.baseTy = p.ty;
+    });
+  };
+
+  stackIn(zRead, WR, true);
+  stackIn(zPending, WP, false);
+}
+
+function dropToZone(p, clientX, clientY){
+  if(!isMobile) return false;
+  const {rr, rp} = boardRects();
+  if(pointInRect(clientX, clientY, rr)){
+    zPending = zPending.filter(x=>x!==p);
+    if(!zRead.includes(p)) zRead.push(p);
+    setZone(p, "read");
+    syncCounts();
+    layoutMobileZones();
+    return true;
+  }
+  if(pointInRect(clientX, clientY, rp)){
+    zRead = zRead.filter(x=>x!==p);
+    if(!zPending.includes(p)) zPending.push(p);
+    setZone(p, "pending");
+    syncCounts();
+    layoutMobileZones();
+    return true;
+  }
+  return false;
+}
+/* ===== end v6-4 mobile zones state ===== */
+
+let maxScale = isMobile ? 1.0 : 2.5;
 
 let pieces = [];
 let selectedPiece = null;
 let scale = 1, panX = 0, panY = 0;
-let minScale = isMobile ? 0.6 : 1;          // allow more zoom-out on mobile
+let minScale = isMobile ? 1.0 : 1;          // allow more zoom-out on mobile
 let homeScale = isMobile ? 1.0 : 1;
-
-if(isMobile){
-  scale = 1;
-  minScale = 1;
-  maxScale = 1;
-  stage.onwheel = null;
-}
-
 
 // BG overscan so it never reveals black margins, while still moving with zoom.
 let bgBaseW = 0, bgBaseH = 0, bgOffX = 0, bgOffY = 0;
@@ -692,6 +871,8 @@ let moverOn = false;
 let zTop = 10;
 
 function clampPan(){
+  if(isMobile){ panX=0; panY=0; return; }
+
   // Clamp so the BG always covers the stage (no black margins).
   const rect = stage.getBoundingClientRect();
   const w = rect.width, h = rect.height;
@@ -707,6 +888,8 @@ function clampPan(){
 }
 
 function updateView(){
+  if(isMobile){ panX = 0; panY = 0; scale = 1; }
+
   clampPan();
   world.style.transform = `translate3d(${panX}px,${panY}px,0) scale(${scale})`;
 }
@@ -814,6 +997,8 @@ function createPiece(meta){
     y: Number(meta.y || 0),
     tx: Number(meta.x || 0),
     ty: Number(meta.y || 0),
+    baseTx: Number(meta.x || 0),
+    baseTy: Number(meta.y || 0),
     phase: Math.random()*Math.PI*2,
     dragging: false,
     moved: 0,
@@ -844,24 +1029,9 @@ function createPiece(meta){
     p.tx = p.baseX + dx;
     p.ty = p.baseY + dy;
   });
-  el.addEventListener("pointerup", () => {
+  el.addEventListener("pointerup", (e) => {
     if(!p.dragging) return;
     p.dragging = false;
-    
-if(isMobile){
-  const zr = document.getElementById("zoneRead").getBoundingClientRect();
-  const zp = document.getElementById("zonePending").getBoundingClientRect();
-  if(e.clientX>zr.left && e.clientX<zr.right && e.clientY>zr.top && e.clientY<zr.bottom){
-    p.tx = (zr.left - stage.getBoundingClientRect().left)/scale;
-    p.ty = (zr.top - stage.getBoundingClientRect().top)/scale;
-  }else if(e.clientX>zp.left && e.clientX<zp.right && e.clientY>zp.top && e.clientY<zp.bottom){
-    p.tx = (zp.left - stage.getBoundingClientRect().left)/scale;
-    p.ty = (zp.top - stage.getBoundingClientRect().top)/scale;
-  }else{
-    stackCenter();
-  }
-}
-
     if(p.moved > 6){
       p.suppressClickUntil = performance.now() + 250;
     }
@@ -903,8 +1073,9 @@ function loadManifest(data){
     alert("Manifest inválido");
     return;
   }
-  data.cards.forEach(createPiece);
+  data.cards.forEach((m)=>{ const p=createPiece(m); if(isMobile){ setZone(p,'z1'); } });
   totalEl.innerHTML = `TOTAL: <span class="num">${data.cards.length}</span>`;
+  if(isMobile){ zRead=[]; zPending=[]; syncCounts(); requestAnimationFrame(()=>layoutMobileZones()); }
   stackCenter();
 }
 
@@ -915,6 +1086,17 @@ function stackCenter(){
   if(!pieces.length) return;
   closeAllHUD();
   clearSelection();
+
+  if(isMobile){
+    zRead=[]; zPending=[];
+    pieces.forEach(p=>{ setZone(p,'z1'); });
+    syncCounts();
+    scale=1; panX=0; panY=0;
+    updateBgMetrics();
+    updateView();
+    requestAnimationFrame(()=>layoutMobileZones());
+    return;
+  }
 
   const rect = stage.getBoundingClientRect();
   const cs = getComputedStyle(document.documentElement);
@@ -942,6 +1124,17 @@ function dealRandom(){
   if(!pieces.length) return;
   closeAllHUD();
   clearSelection();
+
+  if(isMobile){
+    zRead=[]; zPending=[];
+    pieces.forEach(p=>{ setZone(p,'z1'); });
+    syncCounts();
+    scale=1; panX=0; panY=0;
+    updateBgMetrics();
+    updateView();
+    requestAnimationFrame(()=>layoutMobileZones());
+    return;
+  }
   closeAllHUD();
   const rect = stage.getBoundingClientRect();
   const maxX = Math.max(0, rect.width/scale - 175 - 12);
@@ -954,9 +1147,34 @@ function dealRandom(){
 }
 
 function drawOne(){
+  // v6-4 drawOne mobile: only from Zone 1
+  if(isMobile){
+    if(!pieces.length) return;
+    closeAllHUD();
+    clearSelection();
+    const candidates = pieces.filter(p => (mobileZone.get(p)||'z1')==='z1');
+    if(!candidates.length) return;
+    const p = candidates[(Math.random()*candidates.length)|0];
+    p.el.style.zIndex = ++zTop;
+    p.tx += 10; p.ty += 10;
+    p.el.classList.add('flash');
+    setTimeout(()=>p.el.classList.remove('flash'), 210);
+    return;
+  }
   if(!pieces.length) return;
   closeAllHUD();
   clearSelection();
+
+  if(isMobile){
+    zRead=[]; zPending=[];
+    pieces.forEach(p=>{ setZone(p,'z1'); });
+    syncCounts();
+    scale=1; panX=0; panY=0;
+    updateBgMetrics();
+    updateView();
+    requestAnimationFrame(()=>layoutMobileZones());
+    return;
+  }
   closeAllHUD();
   const p = pieces[Math.floor(Math.random()*pieces.length)];
   p.el.style.zIndex = ++zTop;
@@ -966,7 +1184,13 @@ function drawOne(){
   setTimeout(()=>p.el.classList.remove("flash"), 210);
 }
 
-btnDeck.addEventListener("click", stackCenter);
+btnDeck.addEventListener("click", () => {
+  if(isMobile){
+    if(confirm("¿Reiniciar Mazo?")) stackCenter();
+    return;
+  }
+  stackCenter();
+});
 btnDeal.addEventListener("click", dealRandom);
 btnDraw.addEventListener("click", drawOne);
 btnMove.addEventListener("click", () => {
@@ -976,6 +1200,17 @@ btnMove.addEventListener("click", () => {
 btnFrame.addEventListener("click", () => {
   closeAllHUD();
   clearSelection();
+
+  if(isMobile){
+    zRead=[]; zPending=[];
+    pieces.forEach(p=>{ setZone(p,'z1'); });
+    syncCounts();
+    scale=1; panX=0; panY=0;
+    updateBgMetrics();
+    updateView();
+    requestAnimationFrame(()=>layoutMobileZones());
+    return;
+  }
   scale = homeScale;
   panX = 0;
   panY = 0;
@@ -988,11 +1223,23 @@ document.addEventListener("pointerdown", (e)=>{
   if(e.target.closest(".piece")) return;
   closeAllHUD();
   clearSelection();
+
+  if(isMobile){
+    zRead=[]; zPending=[];
+    pieces.forEach(p=>{ setZone(p,'z1'); });
+    syncCounts();
+    scale=1; panX=0; panY=0;
+    updateBgMetrics();
+    updateView();
+    requestAnimationFrame(()=>layoutMobileZones());
+    return;
+  }
 }, {capture:true});
 
 /* PAN (clamped to BG) */
 let panning=false, psx=0, psy=0, basePanX=0, basePanY=0, pid=null;
 stage.addEventListener("pointerdown", e=>{
+  if(isMobile) return;
   if(e.target.closest(".card")) return;
   panning=true;
   stage.classList.add("panning");
@@ -1014,6 +1261,7 @@ window.addEventListener("pointerup", e=>{
 
 /* ZOOM to cursor (locked minScale) */
 stage.addEventListener("wheel", e=>{
+  if(isMobile) return;
   e.preventDefault();
   const rect = stage.getBoundingClientRect();
   const mx = e.clientX - rect.left;
@@ -1052,6 +1300,7 @@ function mid(a,b){
 }
 
 stage.addEventListener("pointerdown", e=>{
+  if(isMobile) return; // v6-4: lock camera on mobile
   // Ignore touches that start on cards to avoid confusing zoom/drag.
   if(e.target.closest(".card")) return;
   pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
@@ -1074,6 +1323,7 @@ stage.addEventListener("pointerdown", e=>{
 },{passive:false});
 
 stage.addEventListener("pointermove", e=>{
+  if(isMobile) return; // v6-4: lock camera on mobile
   if(!pointers.has(e.pointerId)) return;
   pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
 
@@ -1117,8 +1367,13 @@ function tick(){
   const t = performance.now()*0.002;
   for(const p of pieces){
     if(moverOn && !p.dragging){
-      p.tx += Math.sin(t + p.phase) * 0.35;
-      p.ty += Math.cos(t*0.9 + p.phase*1.3) * 0.35;
+      if(isMobile){
+        p.tx = p.baseTx + Math.sin(t + p.phase) * 10;
+        p.ty = p.baseTy + Math.cos(t*0.9 + p.phase*1.3) * 10;
+      }else{
+        p.tx += Math.sin(t + p.phase) * 0.35;
+        p.ty += Math.cos(t*0.9 + p.phase*1.3) * 0.35;
+      }
     }
     p.x += (p.tx - p.x) * (isMobile ? 0.35 : 0.15);
     p.y += (p.ty - p.y) * (isMobile ? 0.35 : 0.15);
@@ -1129,6 +1384,7 @@ function tick(){
 tick();
 updateBgMetrics();
 updateView();
+if(isMobile){ requestAnimationFrame(()=>layoutMobileZones()); }
 
 window.addEventListener("resize", ()=>{
   updateBgMetrics();
