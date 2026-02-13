@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-12</title>
+<title>DECK 6-13</title>
 
 <style>
 :root{
@@ -862,8 +862,10 @@ header button.hdrBtn.active{
 /* ===== end v6-10 ===== */
 
 
-/* ===== v6-12 DESKTOP: read area + mode ===== */
+/* ===== v6-13 DESKTOP: read area + mode (layering + behavior) ===== */
 #readArea{
+  pointer-events:auto;
+  
   position:absolute;
   top:18px;
   right:18px;
@@ -875,7 +877,7 @@ header button.hdrBtn.active{
   box-shadow:0 18px 50px rgba(0,0,0,.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  z-index:6;
+  z-index:2;
   display:none; /* enabled on desktop via media query */
   overflow:hidden;
 }
@@ -885,6 +887,8 @@ header button.hdrBtn.active{
   border-radius:18px;
   border:1px dashed rgba(255,255,255,.18);
   background:rgba(255,255,255,.04);
+
+  z-index:0;
 }
 #btnReadArea{
   position:absolute;
@@ -898,6 +902,8 @@ header button.hdrBtn.active{
   color:#fff;
   font-weight:1000;
   letter-spacing:.8px;
+
+  z-index:2;
 }
 #btnReadBack{
   position:absolute;
@@ -912,9 +918,13 @@ header button.hdrBtn.active{
   color:#fff;
   font-size:28px;
   display:none;
+
+  z-index:3;
 }
 @media (min-width:769px){
-  #readArea{ display:block; }
+  #readArea{
+  pointer-events:auto;
+   display:block; }
 }
 
 /* hide pieces when parked */
@@ -1058,7 +1068,7 @@ function layoutMobileZones(){
   const z1x = W1.x + (W1.w - w)/2;
   const z1y = W1.y + (W1.h - h)/2;
 
-  pieces.forEach((p)=>{
+  (readMode ? readPile : tablePieces()).forEach((p)=>{
     const z = mobileZone.get(p) || "z1";
     if(z === "z1"){
       p.tx = z1x; p.baseTx = z1x;
@@ -1311,6 +1321,77 @@ function exitReadMode(){
 }
 // ===== end v6-12 =====
 
+// ===== v6-13 wiring (desktop read area + mode) =====
+function tablePieces(){
+  // pieces that are NOT in the LEÍDAS zone
+  return pieces.filter(p => !readPile.includes(p));
+}
+
+function updateReadCounts(){
+  const le = document.getElementById("leidasCount");
+  if(le) le.querySelector(".num").textContent = String(readPile.length);
+  updateTotalForMode();
+}
+
+function addToReadPile(p){
+  if(readPile.includes(p)) return;
+  readPile.push(p);
+  updateReadCounts();
+  layoutReadPileStack();
+}
+
+function removeFromReadPile(p){
+  const i = readPile.indexOf(p);
+  if(i>=0){ readPile.splice(i,1); updateReadCounts(); }
+}
+
+function isInReadArea(clientX, clientY){
+  const ra = readAreaRects();
+  return inRect(clientX, clientY, ra);
+}
+
+// Click on read area enters mode
+window.addEventListener("DOMContentLoaded", ()=>{
+  const ra = document.getElementById("readArea");
+  const bEnter = document.getElementById("btnReadArea");
+  const bBack = document.getElementById("btnReadBack");
+  if(ra) ra.addEventListener("click", (e)=>{
+    if(isMobile) return;
+    if(readMode) return;
+    // ignore if clicking on a card over the area
+    if(e.target.closest(".piece")) return;
+    enterReadMode();
+  });
+  if(bEnter) bEnter.addEventListener("click", (e)=>{
+    if(isMobile) return;
+    e.stopPropagation();
+    if(!readMode) enterReadMode();
+  });
+  if(bBack) bBack.addEventListener("click", (e)=>{
+    if(isMobile) return;
+    e.stopPropagation();
+    exitReadMode();
+  });
+});
+
+// When exiting mode, ensure counts/stack are correct
+const __exitReadMode = exitReadMode;
+exitReadMode = function(){
+  __exitReadMode();
+  layoutReadPileStack();
+  updateReadCounts();
+};
+
+// Adjust enterReadMode to show back and ensure other cards are really off-screen (parked)
+const __enterReadMode = enterReadMode;
+enterReadMode = function(){
+  __enterReadMode();
+  updateReadCounts();
+};
+
+// ===== end v6-13 wiring =====
+
+
 let selectedPiece = null;
 let scale = 1, panX = 0, panY = 0;
 let minScale = isMobile ? 1.0 : 1;          // allow more zoom-out on mobile
@@ -1371,7 +1452,7 @@ function clearSelection(){
 }
 
 function closeAllHUD(){
-  pieces.forEach(p => p.el.classList.remove("hudOpen"));
+  (readMode ? readPile : tablePieces()).forEach(p => p.el.classList.remove("hudOpen"));
 }
 
 /* CREATE CARD */
@@ -1511,6 +1592,13 @@ function createPiece(meta){
   el.addEventListener("pointerup", (e) => {
     if(!p.dragging) return;
     p.dragging = false;
+    // v6-13 desktop drop to read area (only when NOT in readMode)
+    if(!isMobile && !readMode){
+      if(isInReadArea(e.clientX, e.clientY)){
+        addToReadPile(p);
+      }
+    }
+
     if(!isMobile && !readMode){
       const r = readAreaRects();
       if(inRect(e.clientX, e.clientY, r)){
