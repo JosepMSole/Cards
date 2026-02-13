@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Deck v4-4</title>
+<title>Deck v4-5</title>
 
 <style>
 :root{
@@ -216,6 +216,13 @@ header button.hdrBtn.active{
   cursor:grab;
   background:#070b18;
 }
+
+#world{
+  position:absolute;
+  inset:0;
+  transform-origin:0 0;
+  will-change:transform;
+}
 #stage.panning{ cursor:grabbing; }
 
 #viewport{
@@ -395,20 +402,22 @@ header button.hdrBtn.active{
 
 /* ===== v4-1 MOBILE LAYOUT (only mobile) ===== */
 @media (max-width: 768px){
+  .infoText{font-size:10px;line-height:1.2;}
+
   :root{
     /* mobile: slightly larger cards (still many visible) */
     --cardW:78px;
     --cardH:110px;
     /* taller header + 2-row wrap */
-    --headerH:132px;
+    --headerH:124px;
   }
   header{
-    padding:8px 10px 8px;
+    padding:6px 10px 6px;
     justify-content:center;
     align-items:center;
     flex-wrap:wrap;
     column-gap:8px;
-    row-gap:1px;
+    row-gap:0px;
   }
   header button.hdrBtn{
     padding:8px 10px;
@@ -423,6 +432,7 @@ header button.hdrBtn.active{
     font-size:12px;
     width:fit-content;
   }
+  #total .num{font-size:1.85em;font-weight:900;}
   .flipBtn{
     width:28px;height:28px;
     border-radius:10px;
@@ -440,8 +450,10 @@ header button.hdrBtn.active{
   .hudInfo{
     left:var(--cardW);
     max-width:200px;
-    padding:8px;
-    transform:translateX(-30px) scale(.82);
+    padding:6px;
+    max-height:calc(var(--cardH) - 10px);
+    overflow:hidden;
+    transform:translateX(-30px) scale(.55);
     transform-origin:left top;
   }  .piece.hudOpen .hudAction{ transform:translateX(0) scale(.82); }
   .piece.hudOpen .hudInfo{ transform:translateX(0) scale(.82); }
@@ -463,13 +475,16 @@ header button.hdrBtn.active{
 </header>
 
 <div id="stage">
-  <div id="bg"></div>
-  <div id="viewport"></div>
+  <div id="world">
+    <div id="bg"></div>
+    <div id="viewport"></div>
+  </div>
 </div>
 
 <script>
 const viewport = document.getElementById("viewport");
 const stage = document.getElementById("stage");
+const world = document.getElementById("world");
 const bg = document.getElementById("bg");
 const totalEl = document.getElementById("total");
 
@@ -485,9 +500,6 @@ let maxScale = isMobile ? 5.0 : 2.5;
 let pieces = [];
 let selectedPiece = null;
 let scale = 1, panX = 0, panY = 0;
-function effPanX(){ return panX + (isMobile ? bgOffX : 0); }
-function effPanY(){ return panY + (isMobile ? bgOffY : 0); }
-function setEffPan(tx,ty){ panX = tx - (isMobile ? bgOffX : 0); panY = ty - (isMobile ? bgOffY : 0); }
 let minScale = isMobile ? 0.6 : 1;          // allow more zoom-out on mobile
 let homeScale = isMobile ? 1.0 : 1;
 
@@ -506,62 +518,33 @@ function updateBgMetrics(){
 
   bg.style.width = bgBaseW + "px";
   bg.style.height = bgBaseH + "px";
-  bg.style.left = "0px";
-  bg.style.top = "0px";
+  bg.style.left = bgOffX + "px";
+  bg.style.top = bgOffY + "px";
 }
          // initial framing (closer than minScale)
 let moverOn = false;
 let zTop = 10;
 
 function clampPan(){
-  // Clamp based on BG bounds so we never expose black margins.
+  // Clamp so the BG always covers the stage (no black margins).
   const rect = stage.getBoundingClientRect();
-  const w = rect.width;
-  const h = rect.height;
-
+  const w = rect.width, h = rect.height;
   if(!bgBaseW || !bgBaseH) updateBgMetrics();
 
-  const bgW = bgBaseW * scale;
-  const bgH = bgBaseH * scale;
+  const minTx = w - (bgOffX + bgBaseW) * scale;
+  const maxTx = -bgOffX * scale;
+  const minTy = h - (bgOffY + bgBaseH) * scale;
+  const maxTy = -bgOffY * scale;
 
-  // In mobile we "glue" BG and cards by applying bgOff to the whole world transform.
-  // So the effective translation is effPan(), and BG itself uses no extra offset.
-  if(isMobile){
-    const tx = effPanX();
-    const ty = effPanY();
-
-    const minTx = w - bgW;
-    const maxTx = 0;
-    const minTy = h - bgH;
-    const maxTy = 0;
-
-    const clampedTx = Math.min(maxTx, Math.max(minTx, tx));
-    const clampedTy = Math.min(maxTy, Math.max(minTy, ty));
-    setEffPan(clampedTx, clampedTy);
-  }else{
-    // Desktop: BG uses (pan + bgOff).
-    const minPanX = w - (bgOffX + bgW);
-    const maxPanX = -bgOffX;
-    const minPanY = h - (bgOffY + bgH);
-    const maxPanY = -bgOffY;
-
-    panX = Math.min(maxPanX, Math.max(minPanX, panX));
-    panY = Math.min(maxPanY, Math.max(minPanY, panY));
-  }
+  panX = Math.min(maxTx, Math.max(minTx, panX));
+  panY = Math.min(maxTy, Math.max(minTy, panY));
 }
 
 function updateView(){
   clampPan();
-  if(isMobile){
-    const tx = effPanX();
-    const ty = effPanY();
-    viewport.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
-    bg.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
-  }else{
-    viewport.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
-    bg.style.transform = `translate(${panX + bgOffX}px,${panY + bgOffY}px) scale(${scale})`;
-  }
+  world.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
 }
+
 
 function clearSelection(){
   if(selectedPiece){
@@ -657,6 +640,7 @@ function createPiece(meta){
 
   /* DRAG: do NOT open HUDs */
   el.addEventListener("pointerdown", e => {
+    if(isMobile && !e.target.closest(".card")) return;
     // Only start interactions when the user touches the card surface (not HUDs/controls).
     if(!e.target.closest(".card")) return;
     if(e.target.closest(".hud") || e.target.closest(".flipBtn") || e.target.closest(".irBtn") || e.target.closest("button") || e.target.closest("a")) return;
@@ -811,7 +795,7 @@ document.addEventListener("pointerdown", (e)=>{
 /* PAN (clamped to BG) */
 let panning=false, psx=0, psy=0, basePanX=0, basePanY=0, pid=null;
 stage.addEventListener("pointerdown", e=>{
-  if(e.target.closest(".piece")) return;
+  if(e.target.closest(".card")) return;
   panning=true;
   stage.classList.add("panning");
   psx = e.clientX; psy = e.clientY;
@@ -837,8 +821,8 @@ stage.addEventListener("wheel", e=>{
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
 
-  const baseX = isMobile ? effPanX() : panX;
-  const baseY = isMobile ? effPanY() : panY;
+  const baseX = panX;
+  const baseY = panY;
 
   const worldX = (mx - baseX) / scale;
   const worldY = (my - baseY) / scale;
@@ -848,7 +832,7 @@ stage.addEventListener("wheel", e=>{
 
   const newBaseX = mx - worldX * newScale;
   const newBaseY = my - worldY * newScale;
-  if(isMobile){ setEffPan(newBaseX, newBaseY); } else { panX = newBaseX; panY = newBaseY; }
+  panX = newBaseX; panY = newBaseY;
   scale = newScale;
   updateView();
 },{passive:false});
@@ -871,7 +855,7 @@ function mid(a,b){
 
 stage.addEventListener("pointerdown", e=>{
   // Ignore touches that start on cards to avoid confusing zoom/drag.
-  if(e.target.closest(".piece")) return;
+  if(e.target.closest(".card")) return;
   pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
   // prevent default touch scrolling on mobile
   if(isMobile) e.preventDefault();
@@ -886,8 +870,8 @@ stage.addEventListener("pointerdown", e=>{
     const rect = stage.getBoundingClientRect();
     const mx = m.x - rect.left;
     const my = m.y - rect.top;
-    pinchWorldX = (mx - (isMobile ? effPanX() : panX)) / scale;
-    pinchWorldY = (my - (isMobile ? effPanY() : panY)) / scale;
+    pinchWorldX = (mx - panX) / scale;
+    pinchWorldY = (my - panY) / scale;
   }
 },{passive:false});
 
@@ -913,7 +897,7 @@ stage.addEventListener("pointermove", e=>{
 
     const newBaseX = mx - pinchWorldX * newScale;
     const newBaseY = my - pinchWorldY * newScale;
-    if(isMobile){ setEffPan(newBaseX, newBaseY); } else { panX = newBaseX; panY = newBaseY; }
+    panX = newBaseX; panY = newBaseY;
     scale = newScale;
     updateView();
   }
