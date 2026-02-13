@@ -938,6 +938,41 @@ header button.hdrBtn.active{
   }
 }
 
+
+/* ===== v6-15 DESKTOP: header LEÍDAS count + read area layout ===== */
+.miniCountDesk{
+  display:flex;
+  align-items:center;
+  padding:10px 14px;
+  border-radius:14px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.16);
+  font-weight:900;
+  gap:8px;
+}
+.miniCountDesk .num{ font-size:1.55em; font-weight:1000; }
+
+/* Read area: make blur box taller, button below and always visible */
+#readArea{
+  height:260px; /* bigger in Y */
+}
+#btnReadArea{
+  position:absolute;
+  top:calc(100% + 10px);
+  left:50%;
+  transform:translateX(-50%);
+  width:88%;
+}
+/* When stacked in read pile (normal mode), disable HUDs */
+.piece.inReadPile .hud,
+.piece.inReadPile .irBtn,
+.piece.inReadPile .infoHud,
+.piece.inReadPile .hudInfo,
+.piece.inReadPile .hudTop{
+  display:none !important;
+}
+/* ===== end v6-15 ===== */
+
 </style>
 </head>
 <body>
@@ -949,6 +984,7 @@ header button.hdrBtn.active{
 <button id="btnMove" class="hdrBtn"><span class="ico" aria-hidden="true">🌀</span><span class="lbl">MOVER</span></button>
 <button id="btnFrame" class="hdrBtn"><span class="ico" aria-hidden="true">🎯</span><span class="lbl">ENCUADRAR</span></button>
 <div id="total">TOTAL: <span class="num">0</span></div>
+<div id="leidasHeader" class="miniCountDesk">LEÍDAS: <span class="num">0</span></div>
 <div id="leidasCount" class="miniCount">LEÍDAS: <span class="num">0</span></div>
 <div id="pendientesCount" class="miniCount">PENDIENTES: <span class="num">0</span></div>
 </header>
@@ -1338,6 +1374,9 @@ function tablePieces(){
 }
 
 function updateReadCounts(){
+  const lh = document.getElementById('leidasHeader');
+  if(lh) lh.querySelector('.num').textContent = String(readPile.length);
+
   const le = document.getElementById("leidasCount");
   if(le) le.querySelector(".num").textContent = String(readPile.length);
   updateTotalForMode();
@@ -1346,13 +1385,20 @@ function updateReadCounts(){
 function addToReadPile(p){
   if(readPile.includes(p)) return;
   readPile.push(p);
+  p.el.classList.add('inReadPile');
+  closeAllHUD();
+  clearSelection();
   updateReadCounts();
   layoutReadPileStack();
 }
 
 function removeFromReadPile(p){
   const i = readPile.indexOf(p);
-  if(i>=0){ readPile.splice(i,1); updateReadCounts(); }
+  if(i>=0){
+    readPile.splice(i,1);
+    p.el.classList.remove('inReadPile');
+    updateReadCounts();
+  }
 }
 
 function isInReadArea(clientX, clientY){
@@ -1388,6 +1434,8 @@ window.addEventListener("DOMContentLoaded", ()=>{
 const __exitReadMode = exitReadMode;
 exitReadMode = function(){
   __exitReadMode();
+  // v6-15: stacked read pile disables HUDs
+  readPile.forEach(p=>p.el.classList.add('inReadPile'));
   layoutReadPileStack();
   updateReadCounts();
 };
@@ -1396,6 +1444,8 @@ exitReadMode = function(){
 const __enterReadMode = enterReadMode;
 enterReadMode = function(){
   __enterReadMode();
+  // v6-15: allow HUDs while inspecting in readMode
+  readPile.forEach(p=>p.el.classList.remove('inReadPile'));
   updateReadCounts();
 };
 
@@ -1602,12 +1652,20 @@ function createPiece(meta){
   el.addEventListener("pointerup", (e) => {
     if(!p.dragging) return;
     p.dragging = false;
-    // v6-13 desktop drop to read area (only when NOT in readMode)
+    // v6-15 desktop drop to read area / remove (only when NOT in readMode)
     if(!isMobile && !readMode){
-      if(isInReadArea(e.clientX, e.clientY)){
+      const inside = isInReadArea(e.clientX, e.clientY);
+      const inPile = readPile.includes(p);
+      if(inside){
         addToReadPile(p);
+        layoutReadPileStack();
+      }else if(inPile){
+        // dragged out -> remove from pile and keep on table
+        removeFromReadPile(p);
+        p.el.style.zIndex = String(++zTop);
       }
     }
+    // v6-15 desktop remove from read area
 
     if(!isMobile && !readMode){
       const r = readAreaRects();
