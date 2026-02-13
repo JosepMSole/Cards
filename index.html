@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-2</title>
+<title>DECK 6-3</title>
 
 <style>
 :root{
@@ -555,24 +555,53 @@ header button.hdrBtn.active{
 
 
 
+/* ===== v6-3 MOBILE ZONE SYSTEM ===== */
 @media (max-width:768px){
-  .zoneBox{
+
+  /* Lock zoom & pan visually */
+  #stage{ touch-action:none; }
+  
+  /* Center zone container */
+  #mobileZones{
     position:absolute;
-    right:10px;
-    width:100px;
-    height:80px;
-    border:1px solid rgba(255,255,255,.3);
-    border-radius:12px;
-    font-size:12px;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
     display:flex;
     align-items:center;
     justify-content:center;
-    background:rgba(0,0,0,.3);
+    gap:20px;
     z-index:5;
+    pointer-events:none;
   }
-  #zoneRead{ top:20px; }
-  #zonePending{ top:120px; }
+
+  #zoneStack{
+    width:var(--cardW);
+    height:calc(var(--cardH) * 2 + 20px);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    align-items:center;
+  }
+
+  .zoneBox{
+    width:120px;
+    height:60px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    font-size:12px;
+    background:rgba(0,0,0,.35);
+  }
+
+  #zoneRead{ order:1; }
+  #zonePending{ order:2; }
+
 }
+/* ===== end v6-3 mobile ===== */
 
 </style>
 </head>
@@ -581,23 +610,25 @@ header button.hdrBtn.active{
 <header>
 <button id="btnDeck" class="hdrBtn"><span class="ico" aria-hidden="true">🂠</span><span class="lbl">MAZO</span></button>
 <button id="btnDraw" class="hdrBtn"><span class="ico" aria-hidden="true">🎴</span><span class="lbl">SACAR UNA</span></button>
-
+<button id="btnDeal" class="hdrBtn"><span class="ico" aria-hidden="true">🃏</span><span class="lbl">REPARTIR</span></button>
 <button id="btnMove" class="hdrBtn"><span class="ico" aria-hidden="true">🌀</span><span class="lbl">MOVER</span></button>
-
-
+<button id="btnFrame" class="hdrBtn"><span class="ico" aria-hidden="true">🎯</span><span class="lbl">ENCUADRAR</span></button>
 <div id="total">TOTAL: <span class="num">0</span></div>
-<div id="leidas">LEÍDAS: <span class="num">0</span></div>
-<div id="pendientes">PENDIENTES: <span class="num">0</span></div>
-
 </header>
+
+
+<div id="mobileZones">
+  <div id="zone1"></div>
+  <div id="zoneStack">
+    <div id="zoneRead" class="zoneBox">LEÍDAS</div>
+    <div id="zonePending" class="zoneBox">PENDIENTES</div>
+  </div>
+</div>
 
 <div id="stage">
   <div id="world">
     <div id="bg"></div>
     <div id="viewport"></div>
-<div id="zoneRead" class="zoneBox">LEÍDAS</div>
-<div id="zonePending" class="zoneBox">PENDIENTES</div>
-
   </div>
 </div>
 
@@ -622,13 +653,21 @@ const btnMove  = document.getElementById("btnMove");
 const btnFrame = document.getElementById("btnFrame");
 
 const isMobile = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
-let maxScale = isMobile ? 1 : 2.5;
+let maxScale = isMobile ? 5.0 : 2.5;
 
 let pieces = [];
 let selectedPiece = null;
 let scale = 1, panX = 0, panY = 0;
-let minScale = isMobile ? 1 : 1;          // allow more zoom-out on mobile
+let minScale = isMobile ? 0.6 : 1;          // allow more zoom-out on mobile
 let homeScale = isMobile ? 1.0 : 1;
+
+if(isMobile){
+  scale = 1;
+  minScale = 1;
+  maxScale = 1;
+  stage.onwheel = null;
+}
+
 
 // BG overscan so it never reveals black margins, while still moving with zoom.
 let bgBaseW = 0, bgBaseH = 0, bgOffX = 0, bgOffY = 0;
@@ -807,16 +846,17 @@ function createPiece(meta){
   });
   el.addEventListener("pointerup", () => {
     if(!p.dragging) return;
+    p.dragging = false;
     
-p.dragging = false;
 if(isMobile){
-  const zone = getMobileDropZone(p.startX, p.startY);
-  if(zone==="read"){
-    p.tx = stage.clientWidth - 120;
-    p.ty = 40;
-  }else if(zone==="pending"){
-    p.tx = stage.clientWidth - 120;
-    p.ty = 140;
+  const zr = document.getElementById("zoneRead").getBoundingClientRect();
+  const zp = document.getElementById("zonePending").getBoundingClientRect();
+  if(e.clientX>zr.left && e.clientX<zr.right && e.clientY>zr.top && e.clientY<zr.bottom){
+    p.tx = (zr.left - stage.getBoundingClientRect().left)/scale;
+    p.ty = (zr.top - stage.getBoundingClientRect().top)/scale;
+  }else if(e.clientX>zp.left && e.clientX<zp.right && e.clientY>zp.top && e.clientY<zp.bottom){
+    p.tx = (zp.left - stage.getBoundingClientRect().left)/scale;
+    p.ty = (zp.top - stage.getBoundingClientRect().top)/scale;
   }else{
     stackCenter();
   }
@@ -1073,16 +1113,6 @@ window.addEventListener("pointercancel", e=>{
 });
 
 /* LOOP */
-
-function getMobileDropZone(clientX, clientY){
-  if(!isMobile) return null;
-  const zr = document.getElementById("zoneRead").getBoundingClientRect();
-  const zp = document.getElementById("zonePending").getBoundingClientRect();
-  if(clientX>zr.left && clientX<zr.right && clientY>zr.top && clientY<zr.bottom) return "read";
-  if(clientX>zp.left && clientX<zp.right && clientY>zp.top && clientY<zp.bottom) return "pending";
-  return null;
-}
-
 function tick(){
   const t = performance.now()*0.002;
   for(const p of pieces){
