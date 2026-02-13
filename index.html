@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Deck v4-1</title>
+<title>Deck v4-2</title>
 
 <style>
 :root{
@@ -213,6 +213,7 @@ header button.hdrBtn.active{
   overflow:hidden;
   touch-action:none;
   cursor:grab;
+  background:#070b18;
 }
 #stage.panning{ cursor:grabbing; }
 
@@ -221,12 +222,18 @@ header button.hdrBtn.active{
   inset:0;
   transform-origin:0 0;
   will-change:transform;
+  z-index:1;
 }
 
 #bg{
   position:absolute;
   inset:0;
-  background:url("images/bg.jpg") center/cover no-repeat;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(1200px 800px at 40% 30%, rgba(124,92,255,.25), transparent 60%),
+    radial-gradient(900px 600px at 70% 60%, rgba(255,202,58,.18), transparent 55%),
+    url("images/bg.jpg") center/cover no-repeat;
 }
 
 /* CARD */
@@ -382,18 +389,19 @@ header button.hdrBtn.active{
 /* ===== v4-1 MOBILE LAYOUT (only mobile) ===== */
 @media (max-width: 768px){
   :root{
-    /* smaller cards so we can see ~20 on screen */
-    --cardW:70px;
-    --cardH:98px;
+    /* mobile: slightly larger cards (still many visible) */
+    --cardW:78px;
+    --cardH:110px;
     /* taller header + 2-row wrap */
     --headerH:132px;
   }
   header{
-    padding:10px 10px 12px;
+    padding:8px 10px 8px;
     justify-content:center;
     align-items:center;
     flex-wrap:wrap;
-    gap:8px;
+    column-gap:8px;
+    row-gap:4px;
   }
   header button.hdrBtn{
     padding:8px 10px;
@@ -442,9 +450,8 @@ header button.hdrBtn.active{
 </header>
 
 <div id="stage">
-  <div id="viewport">
-    <div id="bg"></div>
-  </div>
+  <div id="bg"></div>
+  <div id="viewport"></div>
 </div>
 
 <script>
@@ -459,12 +466,13 @@ const btnMove  = document.getElementById("btnMove");
 const btnFrame = document.getElementById("btnFrame");
 
 const isMobile = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
-let maxScale = isMobile ? 4.0 : 2.5;
+let maxScale = isMobile ? 5.0 : 2.5;
 
 let pieces = [];
 let selectedPiece = null;
 let scale = 1, panX = 0, panY = 0;
-let minScale = isMobile ? 0.8 : 1;          // zoom-out lock
+let minScale = isMobile ? 0.6 : 1;          // allow more zoom-out on mobile
+let homeScale = isMobile ? 1.0 : 1;         // initial framing (closer than minScale)
 let moverOn = false;
 let zTop = 10;
 
@@ -577,7 +585,9 @@ function createPiece(meta){
 
   /* DRAG: do NOT open HUDs */
   el.addEventListener("pointerdown", e => {
-    if(e.target.closest(".flipBtn") || e.target.closest(".irBtn")) return;
+    // Only start interactions when the user touches the card surface (not HUDs/controls).
+    if(!e.target.closest(".card")) return;
+    if(e.target.closest(".hud") || e.target.closest(".flipBtn") || e.target.closest(".irBtn") || e.target.closest("button") || e.target.closest("a")) return;
     p.dragging = true;
     p.moved = 0;
     p.startX = e.clientX;
@@ -651,17 +661,24 @@ function stackCenter(){
   if(!pieces.length) return;
   closeAllHUD();
   clearSelection();
-  closeAllHUD();
+
   const rect = stage.getBoundingClientRect();
-  const cx = (rect.width/2) - (175/2);
-  const cy = (rect.height/2) - (246/2);
+  const cs = getComputedStyle(document.documentElement);
+  const cardW = parseFloat(cs.getPropertyValue("--cardW")) || 175;
+  const cardH = parseFloat(cs.getPropertyValue("--cardH")) || 246;
+
+  const cx = (rect.width/2) - (cardW/2);
+  const cy = (rect.height/2) - (cardH/2);
+
   pieces.forEach((p,i)=>{
     p.tx = cx;
     p.ty = cy;
     p.el.style.zIndex = i+1;
   });
   zTop = pieces.length + 5;
-  scale = minScale;
+
+  // Home view: deck centered, slightly closer on mobile.
+  scale = homeScale;
   panX = 0;
   panY = 0;
   updateView();
@@ -705,7 +722,7 @@ btnMove.addEventListener("click", () => {
 btnFrame.addEventListener("click", () => {
   closeAllHUD();
   clearSelection();
-  scale = minScale;
+  scale = homeScale;
   panX = 0;
   panY = 0;
   updateView();
