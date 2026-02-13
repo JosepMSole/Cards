@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-7</title>
+<title>DECK 6-8</title>
 
 <style>
 :root{
@@ -687,13 +687,7 @@ header button.hdrBtn.active{
   }
 
   /* Lit glow during preview */
-  .piece.lit .card{
-    box-shadow:
-      0 14px 40px rgba(0,0,0,.6),
-      0 0 0 2px rgba(180,255,140,.55),
-      0 0 40px rgba(120,255,90,.55),
-      0 0 90px rgba(120,255,90,.30);
-  }
+  .piece.lit .card{ box-shadow:none !important; }
 }
 /* ===== end v6-6 ===== */
 
@@ -730,6 +724,49 @@ header button.hdrBtn.active{
   .piece.selected .card{ box-shadow:0 14px 40px rgba(0,0,0,.6) !important; }
 }
 /* ===== end v6-7 ===== */
+
+
+/* ===== v6-8 MOBILE: larger Zone1 cards + tighter Z4/Z5 ===== */
+@media (max-width:768px){
+  :root{
+    --cardW: 120px;
+    --cardH: 170px;
+  }
+  #zoneCenter{ gap:8px !important; }
+  #mobileBoard{ gap:18px !important; }
+  #zone4IR{ height:52px !important; }
+  #zone5INFO{ min-height:92px !important; }
+}
+/* ===== end v6-8 ===== */
+
+
+@media (max-width:768px){
+  #btnZoneRead, #btnZonePending{ color:#fff !important; }
+}
+
+
+/* ===== v6-8 MOBILE HEADER: 1 row, remove SACAR UNA + MOVER ===== */
+@media (max-width:768px){
+  #btnDraw, #btnMove{ display:none !important; }
+  header{
+    height:66px !important;
+    padding:6px 10px !important;
+    flex-wrap:nowrap !important;
+    justify-content:space-between !important;
+    column-gap:8px !important;
+    row-gap:0 !important;
+  }
+  header button.hdrBtn{
+    padding:6px 8px !important;
+    font-size:12px !important;
+  }
+  #total, #leidasCount, #pendientesCount{
+    padding:6px 8px !important;
+    font-size:11px !important;
+  }
+  #leidasCount .num, #pendientesCount .num{ font-size:1.25em !important; }
+}
+/* ===== end v6-8 header ===== */
 
 </style>
 </head>
@@ -1197,7 +1234,7 @@ function createPiece(meta){
       const z = mobileZone.get(p)||"z1";
       if(z !== "z1") return;
       if(!isTopCard(p)) return;
-      if(!p.previewed) return;
+      
     }
     p.dragging = true;
     p.moved = 0;
@@ -1256,7 +1293,7 @@ function createPiece(meta){
         if(!p.previewed){
           closeHUDsMobile();
           p.previewed = true;
-          p.ts = 1.5;
+          p.ts = 1;
           p.el.style.zIndex = String(++zTop);
           clearHudZones();
           return;
@@ -1275,7 +1312,7 @@ function createPiece(meta){
         if(!p.previewed){
           closeHUDsMobile();
           p.previewed = true;
-          p.ts = 1.5;
+          p.ts = 1;
           
           p.el.style.zIndex = String(++zTop);
           return;
@@ -1408,7 +1445,7 @@ function drawOne(){
     // behave like first click: preview card (x3 + glow)
     closeHUDsMobile();
     p.previewed = true;
-    p.ts = 1.5;
+    p.ts = 1;
     
     p.el.style.zIndex = String(++zTop);
     return;
@@ -1448,7 +1485,7 @@ function sendTopTo(zone){
   if(!p) return;
   if((mobileZone.get(p)||'z1')!=='z1') return;
   if(!isTopCard(p)) return;
-  if(!p.previewed) return;
+  
 
   if(zone === 'read'){
     zPending = zPending.filter(x=>x!==p);
@@ -1649,9 +1686,9 @@ function tick(){
         p.ty += Math.cos(t*0.9 + p.phase*1.3) * 0.35;
       }
     }
-    p.x += (p.tx - p.x) * (isMobile ? 0.35 : 0.15);
-    p.y += (p.ty - p.y) * (isMobile ? 0.35 : 0.15);
-    p.s += (p.ts - p.s) * (isMobile ? 0.22 : 0.15);
+    p.x += (p.tx - p.x) * (isMobile ? 0.55 : 0.15);
+    p.y += (p.ty - p.y) * (isMobile ? 0.55 : 0.15);
+    p.s += (p.ts - p.s) * 0.35;
     p.el.style.transform = `translate(${p.x}px,${p.y}px) scale(${p.s})`;
   }
   requestAnimationFrame(tick);
