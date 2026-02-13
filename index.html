@@ -468,8 +468,8 @@ header button.hdrBtn.active{
   .infoThumb{
     /* make the thumb smaller so description is always visible */
     aspect-ratio:auto;
-    height:44px;
-    background-size:contain;
+    height:40px;
+    background-size:cover;
     background-position:center;
     background-repeat:no-repeat;
   }
@@ -478,6 +478,15 @@ header button.hdrBtn.active{
     font-size:10px;
     line-height:1.2;
     overflow:hidden;
+  }
+
+
+  /* v5-1: encourage high-quality interpolation on mobile */
+  #world{ transform:translate3d(0,0,0); }
+  .face{
+    -webkit-transform:translateZ(0.5px);
+    transform:translateZ(0.5px);
+    image-rendering:auto;
   }
 
   /* v4-6 mobile fix: avoid pixelation when zooming (iOS rasterization) */
@@ -491,6 +500,32 @@ header button.hdrBtn.active{
 }
 
 /* ===== end v4-1 mobile ===== */
+
+
+/* ===== FX OVERLAY (v5-1) ===== */
+#fx{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  isolation:isolate;
+  z-index:20; /* above world, below header */
+}
+#fx canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+}
+#shade{ mix-blend-mode:multiply; opacity:.94; }
+#lightMap{
+  mix-blend-mode:screen;
+  filter:blur(10px) brightness(1.55) saturate(1.10);
+}
+#dust{ mix-blend-mode:screen; opacity:.85; }
+/* ===== end FX OVERLAY ===== */
+
 
 </style>
 </head>
@@ -510,6 +545,13 @@ header button.hdrBtn.active{
     <div id="bg"></div>
     <div id="viewport"></div>
   </div>
+</div>
+
+
+<div id="fx">
+  <canvas id="shade"></canvas>
+  <canvas id="lightMap"></canvas>
+  <canvas id="dust"></canvas>
 </div>
 
 <script>
@@ -573,7 +615,7 @@ function clampPan(){
 
 function updateView(){
   clampPan();
-  world.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+  world.style.transform = `translate3d(${panX}px,${panY}px,0) scale(${scale})`;
 }
 
 
@@ -644,6 +686,23 @@ function createPiece(meta){
     const thumb = document.createElement("div");
     thumb.className = "infoThumb";
     thumb.style.backgroundImage = `url("images/${meta.hud}")`;
+
+    // v5-1: apply manifest crop if present (fill width, crop overflow, no deformation)
+    const c = meta.hudCrop;
+    if(c && typeof c === "object"){
+      const sc = Number(c.scale || 1);
+      const ox = Number(c.x || 0);
+      const oy = Number(c.y || 0);
+      thumb.style.backgroundSize = `${Math.max(0.1, sc) * 100}%`;
+      thumb.style.backgroundPosition = `calc(50% + ${ox}px) calc(50% + ${oy}px)`;
+      thumb.style.backgroundRepeat = "no-repeat";
+    }else{
+      // fallback: always fill the slot (cropped if needed)
+      thumb.style.backgroundSize = "cover";
+      thumb.style.backgroundPosition = "center";
+      thumb.style.backgroundRepeat = "no-repeat";
+    }
+
     hudI.appendChild(thumb);
   }
   if(meta.hudText){
@@ -983,6 +1042,173 @@ document.querySelectorAll("header .hdrBtn .lbl").forEach(l => {
   }, 4200);
 })();
 /* ===== end v3-5 ===== */
+
+
+/* ===== v5-1: FX overlay (dust + lights) ===== */
+(() => {
+  const cShade  = document.getElementById('shade');
+  const cLight  = document.getElementById('lightMap');
+  const cDust   = document.getElementById('dust');
+  if(!cShade || !cLight || !cDust) return;
+
+  const ctxS = cShade.getContext('2d', {alpha:true});
+  const ctxL = cLight.getContext('2d', {alpha:true});
+  const ctxD = cDust.getContext('2d', {alpha:true});
+
+  let W=0,H=0,dpr=1;
+
+  const rand=(a,b)=>a+Math.random()*(b-a);
+
+  function resize(){
+    // cap DPR to keep perf stable while still looking crisp
+    dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    W = Math.floor(innerWidth*dpr);
+    H = Math.floor(innerHeight*dpr);
+    [cShade,cLight,cDust].forEach(c=>{ c.width=W; c.height=H; });
+  }
+  addEventListener('resize', resize, {passive:true});
+  resize();
+
+  /* ===== Slow Lights (white + teal) ===== */
+  const lights=[];
+  function seedLights(n=16){
+    lights.length=0;
+    for(let i=0;i<n;i++){
+      const speed=rand(0.000010, 0.000028);
+      const ang=rand(0,Math.PI*2);
+      lights.push({
+        x: rand(0.06,0.94),
+        y: rand(0.08,0.92),
+        vx: Math.cos(ang)*speed,
+        vy: Math.sin(ang)*speed*0.75,
+        r:  rand(0.15,0.32),
+        hue: (Math.random()<0.52) ? 'teal' : 'white',
+        phase: rand(0,Math.PI*2),
+        pulse: rand(0.8,1.7),
+        wob: rand(0.6,1.6),
+        intensity: rand(0.8,1.35),
+      });
+    }
+  }
+  seedLights();
+
+  function stepLights(t, dt){
+    for(const L of lights){
+      const ax = 0.00000002 * Math.sin(t*0.00035*L.wob + L.phase);
+      const ay = 0.00000002 * Math.cos(t*0.00031*L.wob + L.phase*1.3);
+      L.vx += ax; L.vy += ay;
+
+      const vmax = 0.000055;
+      L.vx = Math.max(-vmax, Math.min(vmax, L.vx));
+      L.vy = Math.max(-vmax, Math.min(vmax, L.vy));
+
+      L.x += L.vx * dt;
+      L.y += L.vy * dt;
+
+      if(L.x < -0.08) L.x = 1.08;
+      if(L.x >  1.08) L.x = -0.08;
+      if(L.y < -0.08) L.y = 1.08;
+      if(L.y >  1.08) L.y = -0.08;
+    }
+  }
+
+  /* ===== Constant Dust Movement ===== */
+  const dust=[];
+  function seedDust(n=520){
+    dust.length=0;
+    for(let i=0;i<n;i++){
+      dust.push({
+        x: Math.random(),
+        y: Math.random(),
+        z: rand(0.25, 1.35),
+        r: rand(0.55, 2.3),
+        vx: rand(-0.00004,0.00004),
+        vy: rand(-0.00003,0.00003),
+        ph: rand(0, Math.PI*2),
+        tw: rand(0.8, 2.1),
+      });
+    }
+  }
+  seedDust();
+
+  function drawLighting(t){
+    ctxL.clearRect(0,0,W,H);
+
+    ctxS.clearRect(0,0,W,H);
+    ctxS.globalCompositeOperation='source-over';
+    ctxS.fillStyle='rgba(0,0,0,0.93)';
+    ctxS.fillRect(0,0,W,H);
+    ctxS.globalCompositeOperation='destination-out';
+
+    for(const L of lights){
+      const px=L.x*W, py=L.y*H;
+      const pr=L.r*Math.min(W,H);
+      const pulse = 0.60 + 0.40*Math.sin(t*0.0018*L.pulse + L.phase);
+      const I = 0.92 * L.intensity * pulse;
+
+      const col = (L.hue==='teal')
+        ? `rgba(45,212,191,${I})`
+        : `rgba(255,255,255,${I})`;
+
+      const g=ctxL.createRadialGradient(px,py,0,px,py,pr);
+      g.addColorStop(0, col);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctxL.fillStyle=g;
+      ctxL.beginPath(); ctxL.arc(px,py,pr,0,Math.PI*2); ctxL.fill();
+
+      const holeR = pr*1.18;
+      const gs=ctxS.createRadialGradient(px,py,0,px,py,holeR);
+      gs.addColorStop(0,'rgba(0,0,0,0.99)');
+      gs.addColorStop(0.30,'rgba(0,0,0,0.65)');
+      gs.addColorStop(1,'rgba(0,0,0,0)');
+      ctxS.fillStyle=gs;
+      ctxS.beginPath(); ctxS.arc(px,py,holeR,0,Math.PI*2); ctxS.fill();
+    }
+
+    ctxS.globalCompositeOperation='source-over';
+  }
+
+  function drawDust(t, dt){
+    ctxD.clearRect(0,0,W,H);
+
+    for(const p of dust){
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+
+      if(p.x < -0.12) p.x = 1.12;
+      if(p.x >  1.12) p.x = -0.12;
+      if(p.y < -0.12) p.y = 1.12;
+      if(p.y >  1.12) p.y = -0.12;
+
+      const px=p.x*W, py=p.y*H;
+      const pr=p.r*dpr*(0.65+p.z);
+      const tw = 0.35 + 0.65*Math.sin(t*0.0019*p.tw + p.ph);
+      const a = (0.10 + 0.22*tw) * Math.min(1.0, 0.80*p.z);
+
+      const g = ctxD.createRadialGradient(px,py,0,px,py,pr*7.4);
+      g.addColorStop(0, `rgba(220,240,255,${a})`);
+      g.addColorStop(0.35, `rgba(180,220,255,${a*0.55})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctxD.fillStyle=g;
+      ctxD.beginPath(); ctxD.arc(px,py,pr*7.4,0,Math.PI*2); ctxD.fill();
+    }
+  }
+
+  let last=performance.now();
+  function loop(t){
+    const dt = Math.min(50, t-last);
+    last = t;
+
+    stepLights(t, dt);
+    drawLighting(t);
+    drawDust(t, dt);
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+ /* ===== end v5-1 FX ===== */
+
 
 </script>
 
