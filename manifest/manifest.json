@@ -1,6 +1,6 @@
 {
   "version": "builder_v38",
-  "exportedAt": "2026-02-13T11:40:16.609Z",
+  "exportedAt": "2026-02-13T23:50:21.342Z",
   "cards": [
     {
       "num": "#001",
@@ -66,6 +66,136 @@
       },
       "hudText": "Año 2486. Colonia 35. Luna Xena.",
       "url": "https://www.disturbingstories.com/014.html"
+    },
+    {
+      "num": "#006",
+      "front": "MISTERY CARD - 018.jpg",
+      "back": "018 - Confesion - v5.jpg",
+      "hud": "018 - FRAME 2.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 84,
+        "scale": 1
+      },
+      "hudText": "En una antigua cinta se oye un interrogatorio de 1977 a una trabajadora de una misteriosa empresa…",
+      "url": "https://www.disturbingstories.com/018.html"
+    },
+    {
+      "num": "#007",
+      "front": "MISTERY CARD - 020.jpg",
+      "back": "020 - El Proyector Cerebral - v3.jpg",
+      "hud": "020 - FRAME 4.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 0,
+        "scale": 1
+      },
+      "hudText": "La Doctora Kramer, está desarrollando un proyecto que va a revolucionar los estudios sobre el cerebro humano...",
+      "url": "https://www.disturbingstories.com/020.html"
+    },
+    {
+      "num": "#008",
+      "front": "MISTERY CARD - 036.jpg",
+      "back": "036 - El Coleccionista - v4.jpg",
+      "hud": "036 - FRAME 2.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 21,
+        "scale": 1
+      },
+      "hudText": "Año 2186. Espacio profundo y lejano…",
+      "url": "https://www.disturbingstories.com/036.html"
+    },
+    {
+      "num": "#009",
+      "front": "MISTERY CARD - 040.jpg",
+      "back": "040 - El Bolo de la Charanga - v3.jpg",
+      "hud": "040 - FRAME 2.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 56,
+        "scale": 1
+      },
+      "hudText": "La charanga \"Peix Vell\" llegó a un pequeño pueblo de las montañas... un pueblo que nunca olvidarían...",
+      "url": "https://www.disturbingstories.com/040.html"
+    },
+    {
+      "num": "#010",
+      "front": "MISTERY CARD - 083.jpg",
+      "back": "083 - Aquatika - v3.jpg",
+      "hud": "083 - FRAME 1.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": -19,
+        "scale": 1
+      },
+      "hudText": "¡Bienvenidos a Aquatika! Recuerden no bajar ni soltarse de su asiento bajo ningún concepto...",
+      "url": "https://www.disturbingstories.com/083.html"
+    },
+    {
+      "num": "#011",
+      "front": "MISTERY CARD - 151.jpg",
+      "back": "151 - La Criatura Perdida - v3.jpg",
+      "hud": "151 - FRAME 2.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 84,
+        "scale": 1
+      },
+      "hudText": "Existe un juego indie prohibido, uno que casi nadie ha conseguido completar... ",
+      "url": "https://www.disturbingstories.com/151.html"
+    },
+    {
+      "num": "#012",
+      "front": "MISTERY CARD - 152.jpg",
+      "back": "152 - El Ultimo Marciano - v2.jpg",
+      "hud": "152 - FRAME 2.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": -38,
+        "scale": 1
+      },
+      "hudText": "El Dr. Kevin Beckett tiene la oportunidad de su vida para probar unos ansiados experimentos...",
+      "url": "https://www.disturbingstories.com/152.html"
+    },
+    {
+      "num": "#013",
+      "front": "MISTERY CARD - 154.jpg",
+      "back": "154 - El Relato Robado - v2.jpg",
+      "hud": "154 - FRAME 3.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 46,
+        "scale": 1
+      },
+      "hudText": "Una chica entra en una oscura mansión abandonada y se acerca lentamente a una máquina de escribir...",
+      "url": "https://www.disturbingstories.com/154.html"
+    },
+    {
+      "num": "#014",
+      "front": "MISTERY CARD - 158.jpg",
+      "back": "158 - El Interno - v5.jpg",
+      "hud": "158 - FRAME 2.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 86.5,
+        "scale": 1
+      },
+      "hudText": "Un detective accede a las celdas de un sanatorio para interrogar a un anciano con un secreto...",
+      "url": "https://www.disturbingstories.com/158.html"
+    },
+    {
+      "num": "#015",
+      "front": "MISTERY CARD - 159.jpg",
+      "back": "159 - Obitus - v5.jpg",
+      "hud": "159 - FRAME 3.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 55,
+        "scale": 1
+      },
+      "hudText": "Si algo había quedado claro tras el Conflicto Lunar, era que los Exteriores habían llegado para quedarse…",
+      "url": "https://www.disturbingstories.com/159.html"
     }
   ]
 }
