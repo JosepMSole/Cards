@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Deck v3-5</title>
+<title>Deck v4-1</title>
 
 <style>
 :root{
@@ -378,6 +378,56 @@ header button.hdrBtn.active{
     0 0 28px rgba(124,92,255,.55),
     0 0 58px rgba(124,92,255,.35);
 }
+
+/* ===== v4-1 MOBILE LAYOUT (only mobile) ===== */
+@media (max-width: 768px){
+  :root{
+    /* smaller cards so we can see ~20 on screen */
+    --cardW:70px;
+    --cardH:98px;
+    /* taller header + 2-row wrap */
+    --headerH:132px;
+  }
+  header{
+    padding:10px 10px 12px;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  header button.hdrBtn{
+    padding:8px 10px;
+    border-radius:14px;
+    font-size:12px;
+    gap:8px;
+  }
+  header button.hdrBtn .ico{ font-size:16px; }
+  #total{
+    padding:8px 10px;
+    border-radius:14px;
+    font-size:12px;
+    width:fit-content;
+  }
+  .flipBtn{
+    width:28px;height:28px;
+    border-radius:10px;
+    top:6px; right:6px;
+    font-size:14px;
+  }
+  .hudAction{
+    width:110px;height:92px;
+    left:-110px;
+    top:calc((var(--cardH) - 92px)/2);
+  }
+  .irBtn{ width:54px;height:54px;border-radius:16px; }
+  .hudInfo{
+    left:var(--cardW);
+    max-width:220px;
+    padding:10px;
+  }
+}
+/* ===== end v4-1 mobile ===== */
+
 </style>
 </head>
 <body>
@@ -408,10 +458,13 @@ const btnDeal  = document.getElementById("btnDeal");
 const btnMove  = document.getElementById("btnMove");
 const btnFrame = document.getElementById("btnFrame");
 
+const isMobile = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+let maxScale = isMobile ? 4.0 : 2.5;
+
 let pieces = [];
 let selectedPiece = null;
 let scale = 1, panX = 0, panY = 0;
-let minScale = 1;          // zoom-out lock
+let minScale = isMobile ? 0.8 : 1;          // zoom-out lock
 let moverOn = false;
 let zTop = 10;
 
@@ -608,10 +661,9 @@ function stackCenter(){
     p.el.style.zIndex = i+1;
   });
   zTop = pieces.length + 5;
-  scale = 1;
+  scale = minScale;
   panX = 0;
   panY = 0;
-  minScale = 1;
   updateView();
 }
 
@@ -700,13 +752,81 @@ stage.addEventListener("wheel", e=>{
   const worldY = (my - panY) / scale;
 
   const factor = e.deltaY < 0 ? 1.1 : 0.9;
-  const newScale = Math.max(minScale, Math.min(2.5, scale*factor));
+  const newScale = Math.max(minScale, Math.min(maxScale, scale*factor));
 
   panX = mx - worldX * newScale;
   panY = my - worldY * newScale;
   scale = newScale;
   updateView();
 },{passive:false});
+
+
+/* PINCH ZOOM (mobile) */
+const pointers = new Map(); // id -> {x,y}
+let pinchStartDist = 0;
+let pinchStartScale = 1;
+let pinchWorldX = 0;
+let pinchWorldY = 0;
+
+function dist(a,b){
+  const dx = a.x-b.x, dy = a.y-b.y;
+  return Math.hypot(dx,dy);
+}
+function mid(a,b){
+  return {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+}
+
+stage.addEventListener("pointerdown", e=>{
+  pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  // prevent default touch scrolling on mobile
+  if(isMobile) e.preventDefault();
+},{passive:false});
+
+stage.addEventListener("pointermove", e=>{
+  if(!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+  if(pointers.size === 2){
+    // stop single-finger panning while pinching
+    panning = false;
+    stage.classList.remove("panning");
+
+    const [a,b] = Array.from(pointers.values());
+    const m = mid(a,b);
+    const rect = stage.getBoundingClientRect();
+    const mx = m.x - rect.left;
+    const my = m.y - rect.top;
+
+    const d = dist(a,b);
+    if(!pinchStartDist){
+      pinchStartDist = d;
+      pinchStartScale = scale;
+
+      pinchWorldX = (mx - panX) / scale;
+      pinchWorldY = (my - panY) / scale;
+      return;
+    }
+
+    const factor = d / pinchStartDist;
+    const newScale = Math.max(minScale, Math.min(maxScale, pinchStartScale * factor));
+
+    panX = mx - pinchWorldX * newScale;
+    panY = my - pinchWorldY * newScale;
+    scale = newScale;
+    updateView();
+  }
+},{passive:false});
+
+window.addEventListener("pointerup", e=>{
+  pointers.delete(e.pointerId);
+  if(pointers.size < 2){
+    pinchStartDist = 0;
+  }
+});
+window.addEventListener("pointercancel", e=>{
+  pointers.delete(e.pointerId);
+  pinchStartDist = 0;
+});
 
 /* LOOP */
 function tick(){
