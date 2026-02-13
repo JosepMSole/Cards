@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-1</title>
+<title>DECK 6-2</title>
 
 <style>
 :root{
@@ -554,6 +554,26 @@ header button.hdrBtn.active{
 
 
 
+
+@media (max-width:768px){
+  .zoneBox{
+    position:absolute;
+    right:10px;
+    width:100px;
+    height:80px;
+    border:1px solid rgba(255,255,255,.3);
+    border-radius:12px;
+    font-size:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.3);
+    z-index:5;
+  }
+  #zoneRead{ top:20px; }
+  #zonePending{ top:120px; }
+}
+
 </style>
 </head>
 <body>
@@ -561,16 +581,23 @@ header button.hdrBtn.active{
 <header>
 <button id="btnDeck" class="hdrBtn"><span class="ico" aria-hidden="true">🂠</span><span class="lbl">MAZO</span></button>
 <button id="btnDraw" class="hdrBtn"><span class="ico" aria-hidden="true">🎴</span><span class="lbl">SACAR UNA</span></button>
-<button id="btnDeal" class="hdrBtn"><span class="ico" aria-hidden="true">🃏</span><span class="lbl">REPARTIR</span></button>
+
 <button id="btnMove" class="hdrBtn"><span class="ico" aria-hidden="true">🌀</span><span class="lbl">MOVER</span></button>
-<button id="btnFrame" class="hdrBtn"><span class="ico" aria-hidden="true">🎯</span><span class="lbl">ENCUADRAR</span></button>
+
+
 <div id="total">TOTAL: <span class="num">0</span></div>
+<div id="leidas">LEÍDAS: <span class="num">0</span></div>
+<div id="pendientes">PENDIENTES: <span class="num">0</span></div>
+
 </header>
 
 <div id="stage">
   <div id="world">
     <div id="bg"></div>
     <div id="viewport"></div>
+<div id="zoneRead" class="zoneBox">LEÍDAS</div>
+<div id="zonePending" class="zoneBox">PENDIENTES</div>
+
   </div>
 </div>
 
@@ -595,47 +622,12 @@ const btnMove  = document.getElementById("btnMove");
 const btnFrame = document.getElementById("btnFrame");
 
 const isMobile = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
-let maxScale = isMobile ? 5.0 : 2.5;
-
-/* ===== v6-1 MOBILE: Snap-to-grid (desktop-like icon placement) ===== */
-const gridSnapOnMobile = true;      // only applies on mobile
-const gridGapMobile = 6;            // gap between grid cells in world units (px at scale=1)
-
-function getCardSize(){
-  const cs = getComputedStyle(document.documentElement);
-  const cardW = parseFloat(cs.getPropertyValue("--cardW")) || 175;
-  const cardH = parseFloat(cs.getPropertyValue("--cardH")) || 246;
-  return {cardW, cardH};
-}
-function getGridStep(){
-  const {cardW, cardH} = getCardSize();
-  // Step is card size + small gap so cards naturally align in tidy rows/cols.
-  return {gx: cardW + gridGapMobile, gy: cardH + gridGapMobile, cardW, cardH};
-}
-function clamp(v, lo, hi){ return Math.min(hi, Math.max(lo, v)); }
-
-function snapToGrid(p){
-  if(!(isMobile && gridSnapOnMobile)) return;
-  const rect = stage.getBoundingClientRect();
-  const {gx, gy, cardW, cardH} = getGridStep();
-
-  // keep within stage bounds in world space (so you don't "lose" cards off-screen)
-  const maxX = Math.max(0, rect.width/scale - cardW);
-  const maxY = Math.max(0, rect.height/scale - cardH);
-
-  let nx = Math.round(p.tx / gx) * gx;
-  let ny = Math.round(p.ty / gy) * gy;
-
-  p.tx = clamp(nx, 0, maxX);
-  p.ty = clamp(ny, 0, maxY);
-}
-/* ===== end v6-1 MOBILE snap ===== */
-
+let maxScale = isMobile ? 1 : 2.5;
 
 let pieces = [];
 let selectedPiece = null;
 let scale = 1, panX = 0, panY = 0;
-let minScale = isMobile ? 0.6 : 1;          // allow more zoom-out on mobile
+let minScale = isMobile ? 1 : 1;          // allow more zoom-out on mobile
 let homeScale = isMobile ? 1.0 : 1;
 
 // BG overscan so it never reveals black margins, while still moving with zoom.
@@ -815,8 +807,21 @@ function createPiece(meta){
   });
   el.addEventListener("pointerup", () => {
     if(!p.dragging) return;
-    p.dragging = false;
-    snapToGrid(p);
+    
+p.dragging = false;
+if(isMobile){
+  const zone = getMobileDropZone(p.startX, p.startY);
+  if(zone==="read"){
+    p.tx = stage.clientWidth - 120;
+    p.ty = 40;
+  }else if(zone==="pending"){
+    p.tx = stage.clientWidth - 120;
+    p.ty = 140;
+  }else{
+    stackCenter();
+  }
+}
+
     if(p.moved > 6){
       p.suppressClickUntil = performance.now() + 250;
     }
@@ -1068,6 +1073,16 @@ window.addEventListener("pointercancel", e=>{
 });
 
 /* LOOP */
+
+function getMobileDropZone(clientX, clientY){
+  if(!isMobile) return null;
+  const zr = document.getElementById("zoneRead").getBoundingClientRect();
+  const zp = document.getElementById("zonePending").getBoundingClientRect();
+  if(clientX>zr.left && clientX<zr.right && clientY>zr.top && clientY<zr.bottom) return "read";
+  if(clientX>zp.left && clientX<zp.right && clientY>zp.top && clientY<zp.bottom) return "pending";
+  return null;
+}
+
 function tick(){
   const t = performance.now()*0.002;
   for(const p of pieces){
