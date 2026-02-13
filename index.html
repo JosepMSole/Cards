@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Deck v4-3</title>
+<title>Deck v4-4</title>
 
 <style>
 :root{
@@ -52,6 +52,7 @@ header button.active{
   border:1px solid rgba(255,255,255,.2);
   font-weight:900;
 }
+#total .num{ font-size:1.35em; font-weight:1000; margin-left:6px; }
 
 /* ===== v3-5 HEADER FX ===== */
 header{
@@ -407,7 +408,7 @@ header button.hdrBtn.active{
     align-items:center;
     flex-wrap:wrap;
     column-gap:8px;
-    row-gap:4px;
+    row-gap:1px;
   }
   header button.hdrBtn{
     padding:8px 10px;
@@ -429,17 +430,23 @@ header button.hdrBtn.active{
     font-size:14px;
   }
   .hudAction{
-    width:110px;height:92px;
-    left:-110px;
-    top:calc((var(--cardH) - 92px)/2);
+    width:92px;height:70px;
+    left:-92px;
+    top:calc((var(--cardH) - 70px)/2);
+    transform:translateX(26px) scale(.82);
+    transform-origin:center;
   }
-  .irBtn{ width:54px;height:54px;border-radius:16px; }
+  .irBtn{ width:40px;height:40px;border-radius:12px; }
   .hudInfo{
     left:var(--cardW);
-    max-width:220px;
-    padding:10px;
-  }
+    max-width:200px;
+    padding:8px;
+    transform:translateX(-30px) scale(.82);
+    transform-origin:left top;
+  }  .piece.hudOpen .hudAction{ transform:translateX(0) scale(.82); }
+  .piece.hudOpen .hudInfo{ transform:translateX(0) scale(.82); }
 }
+
 /* ===== end v4-1 mobile ===== */
 
 </style>
@@ -452,7 +459,7 @@ header button.hdrBtn.active{
 <button id="btnDeal" class="hdrBtn"><span class="ico" aria-hidden="true">🃏</span><span class="lbl">REPARTIR</span></button>
 <button id="btnMove" class="hdrBtn"><span class="ico" aria-hidden="true">🌀</span><span class="lbl">MOVER</span></button>
 <button id="btnFrame" class="hdrBtn"><span class="ico" aria-hidden="true">🎯</span><span class="lbl">ENCUADRAR</span></button>
-<div id="total">TOTAL: 0</div>
+<div id="total">TOTAL: <span class="num">0</span></div>
 </header>
 
 <div id="stage">
@@ -478,6 +485,9 @@ let maxScale = isMobile ? 5.0 : 2.5;
 let pieces = [];
 let selectedPiece = null;
 let scale = 1, panX = 0, panY = 0;
+function effPanX(){ return panX + (isMobile ? bgOffX : 0); }
+function effPanY(){ return panY + (isMobile ? bgOffY : 0); }
+function setEffPan(tx,ty){ panX = tx - (isMobile ? bgOffX : 0); panY = ty - (isMobile ? bgOffY : 0); }
 let minScale = isMobile ? 0.6 : 1;          // allow more zoom-out on mobile
 let homeScale = isMobile ? 1.0 : 1;
 
@@ -514,20 +524,43 @@ function clampPan(){
   const bgW = bgBaseW * scale;
   const bgH = bgBaseH * scale;
 
-  // BG screen-space left/top is (pan + bgOff). Keep left<=0 and right>=w (same for Y).
-  const minPanX = w - (bgOffX + bgW);
-  const maxPanX = -bgOffX;
-  const minPanY = h - (bgOffY + bgH);
-  const maxPanY = -bgOffY;
+  // In mobile we "glue" BG and cards by applying bgOff to the whole world transform.
+  // So the effective translation is effPan(), and BG itself uses no extra offset.
+  if(isMobile){
+    const tx = effPanX();
+    const ty = effPanY();
 
-  panX = Math.min(maxPanX, Math.max(minPanX, panX));
-  panY = Math.min(maxPanY, Math.max(minPanY, panY));
+    const minTx = w - bgW;
+    const maxTx = 0;
+    const minTy = h - bgH;
+    const maxTy = 0;
+
+    const clampedTx = Math.min(maxTx, Math.max(minTx, tx));
+    const clampedTy = Math.min(maxTy, Math.max(minTy, ty));
+    setEffPan(clampedTx, clampedTy);
+  }else{
+    // Desktop: BG uses (pan + bgOff).
+    const minPanX = w - (bgOffX + bgW);
+    const maxPanX = -bgOffX;
+    const minPanY = h - (bgOffY + bgH);
+    const maxPanY = -bgOffY;
+
+    panX = Math.min(maxPanX, Math.max(minPanX, panX));
+    panY = Math.min(maxPanY, Math.max(minPanY, panY));
+  }
 }
 
 function updateView(){
   clampPan();
-  viewport.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
-  bg.style.transform = `translate(${panX + bgOffX}px,${panY + bgOffY}px) scale(${scale})`;
+  if(isMobile){
+    const tx = effPanX();
+    const ty = effPanY();
+    viewport.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+    bg.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+  }else{
+    viewport.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+    bg.style.transform = `translate(${panX + bgOffX}px,${panY + bgOffY}px) scale(${scale})`;
+  }
 }
 
 function clearSelection(){
@@ -689,7 +722,7 @@ function loadManifest(data){
     return;
   }
   data.cards.forEach(createPiece);
-  totalEl.textContent = "TOTAL: " + data.cards.length;
+  totalEl.innerHTML = `TOTAL: <span class="num">${data.cards.length}</span>`;
   stackCenter();
 }
 
@@ -804,14 +837,18 @@ stage.addEventListener("wheel", e=>{
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
 
-  const worldX = (mx - panX) / scale;
-  const worldY = (my - panY) / scale;
+  const baseX = isMobile ? effPanX() : panX;
+  const baseY = isMobile ? effPanY() : panY;
+
+  const worldX = (mx - baseX) / scale;
+  const worldY = (my - baseY) / scale;
 
   const factor = e.deltaY < 0 ? 1.1 : 0.9;
   const newScale = Math.max(minScale, Math.min(maxScale, scale*factor));
 
-  panX = mx - worldX * newScale;
-  panY = my - worldY * newScale;
+  const newBaseX = mx - worldX * newScale;
+  const newBaseY = my - worldY * newScale;
+  if(isMobile){ setEffPan(newBaseX, newBaseY); } else { panX = newBaseX; panY = newBaseY; }
   scale = newScale;
   updateView();
 },{passive:false});
@@ -849,8 +886,8 @@ stage.addEventListener("pointerdown", e=>{
     const rect = stage.getBoundingClientRect();
     const mx = m.x - rect.left;
     const my = m.y - rect.top;
-    pinchWorldX = (mx - panX) / scale;
-    pinchWorldY = (my - panY) / scale;
+    pinchWorldX = (mx - (isMobile ? effPanX() : panX)) / scale;
+    pinchWorldY = (my - (isMobile ? effPanY() : panY)) / scale;
   }
 },{passive:false});
 
@@ -874,8 +911,9 @@ stage.addEventListener("pointermove", e=>{
     const factor = d / Math.max(1e-6, pinchStartDist);
     const newScale = Math.max(minScale, Math.min(maxScale, pinchStartScale * factor));
 
-    panX = mx - pinchWorldX * newScale;
-    panY = my - pinchWorldY * newScale;
+    const newBaseX = mx - pinchWorldX * newScale;
+    const newBaseY = my - pinchWorldY * newScale;
+    if(isMobile){ setEffPan(newBaseX, newBaseY); } else { panX = newBaseX; panY = newBaseY; }
     scale = newScale;
     updateView();
   }
