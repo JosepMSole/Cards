@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Deck v4-5</title>
+<title>Deck v4-6</title>
 
 <style>
 :root{
@@ -457,6 +457,37 @@ header button.hdrBtn.active{
     transform-origin:left top;
   }  .piece.hudOpen .hudAction{ transform:translateX(0) scale(.82); }
   .piece.hudOpen .hudInfo{ transform:translateX(0) scale(.82); }
+
+  /* v4-6 mobile fixes: INFO HUD shows image + text (no cropping) */
+  .hudInfo{
+    /* keep HUD smaller than the card height, but allow both thumb + text */
+    max-height:calc(var(--cardH) - 8px);
+    overflow:hidden;
+    gap:6px;
+  }
+  .infoThumb{
+    /* make the thumb smaller so description is always visible */
+    aspect-ratio:auto;
+    height:44px;
+    background-size:contain;
+    background-position:center;
+    background-repeat:no-repeat;
+  }
+  .infoText{
+    display:block;
+    font-size:10px;
+    line-height:1.2;
+    overflow:hidden;
+  }
+
+  /* v4-6 mobile fix: avoid pixelation when zooming (iOS rasterization) */
+  .card{ will-change:auto; }
+  .face{ will-change:auto; transform-style:preserve-3d; -webkit-transform-style:preserve-3d; }
+  .front{ transform:rotateY(0deg); }
+  .back{ transform:rotateY(180deg); }
+  .card.flipped .front{ transform:rotateY(-180deg); }
+  .card.flipped .back{ transform:rotateY(0deg); }
+
 }
 
 /* ===== end v4-1 mobile ===== */
