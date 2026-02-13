@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-18</title>
+<title>DECK 6-20</title>
 
 <style>
 :root{
@@ -1685,15 +1685,6 @@ function createPiece(meta){
     }
     // v6-15 desktop remove from read area
 
-    if(!isMobile && !readMode){
-      const r = readAreaRects();
-      if(inRect(e.clientX, e.clientY, r)){
-        if(!readPile.includes(p)) readPile.push(p);
-        layoutReadPileStack();
-        updateTotalForMode();
-      }
-    }
-
     if(isMobile){
       const ok = dropToZone(p, e.clientX, e.clientY);
       if(ok){
@@ -1849,8 +1840,8 @@ function stackCenter(){
   });
   zTop = pieces.length + 5;
 
-  // Home view: deck centered, slightly closer on mobile.
-  scale = homeScale;
+  // Home view: deck centered
+  scale = 1;
   panX = 0;
   panY = 0;
   updateView();
