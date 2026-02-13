@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-9</title>
+<title>DECK 6-10</title>
 
 <style>
 :root{
@@ -769,70 +769,97 @@ header button.hdrBtn.active{
 /* ===== end v6-8 header ===== */
 
 
-/* ===== v6-9 MOBILE LAYOUT (match sketch) ===== */
+
+/* ===== v6-10 MOBILE LAYOUT (match provided sketch) ===== */
 @media (max-width:768px){
-  /* Board sits below header, centered */
   #mobileBoard{
-    top:56% !important;
-    gap:16px !important;
+    position:absolute;
+    left:50% !important;
+    top:calc(66px + (100vh - 66px)/2) !important;
+    transform:translate(-50%,-50%) !important;
+    gap:14px !important;
+    z-index:4;
   }
 
-  /* Left column: Z4, Z1, Z5 */
-  #zoneCenter{
-    gap:10px !important;
-    align-items:stretch !important;
+  #zoneCenter, #zoneRight{
+    width:44vw !important;
+    max-width:240px;
+  }
+  #zoneCenter{ gap:12px !important; align-items:stretch !important; }
+  #zoneRight{ gap:12px !important; align-items:stretch !important; }
+
+  #zone4IR{
+    width:100% !important;
+    height:58px !important;
+    border-radius:18px !important;
+    justify-content:center !important;
+    padding:10px !important;
   }
 
-  /* Zone 1 */
   #zone1Slot.slotDeck{
-    width:var(--cardW) !important;
-    height:var(--cardH) !important;
+    width:100% !important;
+    height:44vh !important;
+    min-height:280px;
+    max-height:520px;
+    border-radius:18px !important;
+    border:1px solid rgba(255,255,255,.10) !important;
+    background:rgba(0,0,0,.10) !important;
+    box-shadow:0 10px 30px rgba(0,0,0,.25) inset !important;
   }
 
-  /* Zone 4/5 size */
-  #zone4IR, #zone5INFO{
-    width:calc(var(--cardW) * 1.55) !important;
-  }
-  #zone4IR{ height:64px !important; justify-content:center !important; }
   #zone5INFO{
-    min-height:160px !important;
+    width:100% !important;
+    height:22vh !important;
+    min-height:160px;
+    max-height:260px;
     padding:12px !important;
     gap:10px !important;
-  }
-
-  /* Zone5: cropped image + text */
-  #zone5INFO .infoThumb{
-    width:100%;
-    height:56px;
-    border-radius:14px;
-    background-color:rgba(255,255,255,.06);
-    border:1px solid rgba(255,255,255,.10);
-  }
-  #zone5INFO .infoText{
-    width:100%;
-    font-size:14px;
-    line-height:1.25;
-    color:rgba(255,255,255,.92);
-  }
-
-  /* Right column: label above Z2, label below Z3 */
-  #zoneRight{ gap:10px !important; }
-  #btnZoneRead, #btnZonePending{
-    width:calc(var(--cardW) * 1.55);
-    text-align:center;
-    color:#fff !important;
-  }
-  #zoneReadSlot, #zonePendingSlot{
-    width:calc(var(--cardW) * 1.55) !important;
-    height:calc(var(--cardH) * 1.35) !important;
     border-radius:18px !important;
   }
 
-  /* Pointer events */
+  #zone5INFO .infoThumb{
+    width:100%;
+    height:58px !important;
+    border-radius:14px !important;
+    background-color:rgba(255,255,255,.06) !important;
+    border:1px solid rgba(255,255,255,.10) !important;
+    flex:0 0 auto;
+  }
+  #zone5INFO .infoText{
+    width:100%;
+    font-size:14px !important;
+    line-height:1.25 !important;
+    color:rgba(255,255,255,.92) !important;
+    overflow:hidden;
+    flex:1 1 auto;
+  }
+
+  #btnZoneRead, #btnZonePending{
+    width:100% !important;
+    height:52px !important;
+    padding:10px 14px !important;
+    border-radius:18px !important;
+    color:#fff !important;
+    font-weight:1000 !important;
+    letter-spacing:.6px !important;
+  }
+  #zoneReadSlot, #zonePendingSlot{
+    width:100% !important;
+    height:34vh !important;
+    min-height:240px;
+    max-height:440px;
+    border-radius:18px !important;
+  }
+
+  #btnZoneRead{ order:0; margin-bottom:-6px; }
+  #zoneReadSlot{ order:1; }
+  #zonePendingSlot{ order:2; }
+  #btnZonePending{ order:3; margin-top:-6px; }
+
   #mobileBoard{ pointer-events:none; }
   #mobileBoard button{ pointer-events:auto; }
 }
-/* ===== end v6-9 ===== */
+/* ===== end v6-10 ===== */
 
 </style>
 </head>
@@ -1337,7 +1364,7 @@ function createPiece(meta){
       }
     }
     if(p.moved > 6){
-      p.suppressClickUntil = performance.now() + 250;
+      p.suppressClickUntil = performance.now() + 40;
     }
   });
 
@@ -1750,8 +1777,13 @@ function tick(){
         p.ty += Math.cos(t*0.9 + p.phase*1.3) * 0.35;
       }
     }
-    p.x += (p.tx - p.x) * (isMobile ? 0.55 : 0.15);
-    p.y += (p.ty - p.y) * (isMobile ? 0.55 : 0.15);
+    if(isMobile && p.dragging){
+      p.x = p.tx;
+      p.y = p.ty;
+    }else{
+      p.x += (p.tx - p.x) * (isMobile ? 0.75 : 0.15);
+      p.y += (p.ty - p.y) * (isMobile ? 0.75 : 0.15);
+    }
     p.s += (p.ts - p.s) * 0.35;
     p.el.style.transform = `translate(${p.x}px,${p.y}px) scale(${p.s})`;
   }
