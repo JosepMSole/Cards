@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-8</title>
+<title>DECK 6-9</title>
 
 <style>
 :root{
@@ -768,6 +768,72 @@ header button.hdrBtn.active{
 }
 /* ===== end v6-8 header ===== */
 
+
+/* ===== v6-9 MOBILE LAYOUT (match sketch) ===== */
+@media (max-width:768px){
+  /* Board sits below header, centered */
+  #mobileBoard{
+    top:56% !important;
+    gap:16px !important;
+  }
+
+  /* Left column: Z4, Z1, Z5 */
+  #zoneCenter{
+    gap:10px !important;
+    align-items:stretch !important;
+  }
+
+  /* Zone 1 */
+  #zone1Slot.slotDeck{
+    width:var(--cardW) !important;
+    height:var(--cardH) !important;
+  }
+
+  /* Zone 4/5 size */
+  #zone4IR, #zone5INFO{
+    width:calc(var(--cardW) * 1.55) !important;
+  }
+  #zone4IR{ height:64px !important; justify-content:center !important; }
+  #zone5INFO{
+    min-height:160px !important;
+    padding:12px !important;
+    gap:10px !important;
+  }
+
+  /* Zone5: cropped image + text */
+  #zone5INFO .infoThumb{
+    width:100%;
+    height:56px;
+    border-radius:14px;
+    background-color:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+  }
+  #zone5INFO .infoText{
+    width:100%;
+    font-size:14px;
+    line-height:1.25;
+    color:rgba(255,255,255,.92);
+  }
+
+  /* Right column: label above Z2, label below Z3 */
+  #zoneRight{ gap:10px !important; }
+  #btnZoneRead, #btnZonePending{
+    width:calc(var(--cardW) * 1.55);
+    text-align:center;
+    color:#fff !important;
+  }
+  #zoneReadSlot, #zonePendingSlot{
+    width:calc(var(--cardW) * 1.55) !important;
+    height:calc(var(--cardH) * 1.35) !important;
+    border-radius:18px !important;
+  }
+
+  /* Pointer events */
+  #mobileBoard{ pointer-events:none; }
+  #mobileBoard button{ pointer-events:auto; }
+}
+/* ===== end v6-9 ===== */
+
 </style>
 </head>
 <body>
@@ -801,10 +867,8 @@ header button.hdrBtn.active{
     <button id="btnZoneRead" class="zoneLabel zoneLabelRead" type="button">LEÍDAS</button>
     <div id="zoneReadSlot" class="slot slotRead"></div>
 
-    <div style="height:18px"></div>
-
-    <button id="btnZonePending" class="zoneLabel zoneLabelPending" type="button">PENDIENTES</button>
     <div id="zonePendingSlot" class="slot slotPending"></div>
+    <button id="btnZonePending" class="zoneLabel zoneLabelPending" type="button">PENDIENTES</button>
   </div>
 </div>
 
