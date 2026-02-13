@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-5</title>
+<title>DECK 6-6</title>
 
 <style>
 :root{
@@ -672,23 +672,30 @@ header button.hdrBtn.active{
 /* ===== end v6-4 hud alignment ===== */
 
 
-/* ===== v6-5 MOBILE: top-card preview + snap piles ===== */
+/* ===== v6-6 MOBILE: top-card preview + piles + colored counters ===== */
 @media (max-width:768px){
-  /* counts as colored pills */
-  #leidasCount{ background:rgba(22,163,74,.35) !important; border-color:rgba(22,163,74,.65) !important; }
-  #pendientesCount{ background:rgba(220,38,38,.35) !important; border-color:rgba(220,38,38,.65) !important; }
+  /* Colored counters */
+  #leidasCount{
+    background:rgba(22,163,74,.30) !important;
+    border-color:rgba(22,163,74,.65) !important;
+    box-shadow:0 0 18px rgba(22,163,74,.18) !important;
+  }
+  #pendientesCount{
+    background:rgba(220,38,38,.28) !important;
+    border-color:rgba(220,38,38,.65) !important;
+    box-shadow:0 0 18px rgba(220,38,38,.16) !important;
+  }
 
-  /* smoother drag */
-  .piece{ will-change:transform; }
+  /* Lit glow during preview */
   .piece.lit .card{
     box-shadow:
       0 14px 40px rgba(0,0,0,.6),
       0 0 0 2px rgba(180,255,140,.55),
       0 0 40px rgba(120,255,90,.55),
-      0 0 90px rgba(120,255,90,.35);
+      0 0 90px rgba(120,255,90,.30);
   }
 }
-/* ===== end v6-5 ===== */
+/* ===== end v6-6 ===== */
 
 </style>
 </head>
@@ -819,24 +826,27 @@ function layoutMobileZones(){
   });
 
   const stackIn = (arr, slot, baseTop=true) => {
-    // pile: small offsets, like a deck
+    // pile stack (deck-like) with small offsets
     const baseX = slot.x + (slot.w - w)/2;
     const baseY = slot.y + (slot.h - h)/2;
-    const off = 6; // px offset between cards
+    const off = 7; // px
     arr.forEach((p, i)=>{
       const dx = i * off;
       const dy = i * off * 0.55;
       p.tx = baseX + dx; p.baseTx = p.tx;
       p.ty = baseY + dy; p.baseTy = p.ty;
-      p.el.style.zIndex = 200 + i; // above board
+      p.el.style.zIndex = String(200 + i);
+      // placed cards should be normal scale, no glow
       p.ts = 1;
+      p.previewed = true; // already "seen"
       p.el.classList.remove('lit');
+      p.el.classList.remove('hudOpen');
     });
   };
 
   stackIn(zRead, WR, true);
   stackIn(zPending, WP, false);
-  refreshDeckVisibility();
+  normalizeZone1Stack();
 }
 
 function dropToZone(p, clientX, clientY){
@@ -862,31 +872,45 @@ function dropToZone(p, clientX, clientY){
 }
 /* ===== end v6-4 mobile zones state ===== */
 
-/* ===== v6-5 mobile top-card (zone1 sequential) ===== */
+/* ===== v6-6 mobile top-card + piles ===== */
 function deckTop(){
-  // top is the last piece in z1 by zIndex (highest)
-  const z1 = pieces.filter(p => (mobileZone.get(p)||'z1')==='z1');
+  if(!isMobile) return null;
+  const z1 = pieces.filter(p => (mobileZone.get(p)||'z1') === 'z1');
   if(!z1.length) return null;
-  z1.sort((a,b)=> (parseInt(a.el.style.zIndex||0) - parseInt(b.el.style.zIndex||0)));
+  z1.sort((a,b)=> (parseInt(a.el.style.zIndex||"0",10) - parseInt(b.el.style.zIndex||"0",10)));
   return z1[z1.length-1];
 }
 
-function refreshDeckVisibility(){
-  if(!isMobile) return;
-  const top = deckTop();
-  for(const p of pieces){
-    const z = mobileZone.get(p)||'z1';
-    if(z==='z1'){
-      const isTop = (p===top);
-      p.el.style.opacity = isTop ? "1" : "0";
-      p.el.style.pointerEvents = isTop ? "auto" : "none";
-    }else{
-      p.el.style.opacity = "1";
-      p.el.style.pointerEvents = "auto";
-    }
-  }
+function isTopCard(p){
+  const t = deckTop();
+  return t && t === p;
 }
-/* ===== end v6-5 ===== */
+
+function normalizeZone1Stack(){
+  if(!isMobile) return;
+  // keep all zone1 cards stacked in same place so you never see the next until top leaves
+  const {s, r1} = boardRects();
+  if(!r1) return;
+  const {w,h} = getCardWH();
+  const x = (r1.left - s.left) + (r1.width - w)/2;
+  const y = (r1.top  - s.top ) + (r1.height - h)/2;
+  const z1 = pieces.filter(p => (mobileZone.get(p)||'z1') === 'z1');
+  z1.forEach((p,i)=>{
+    // don't override the dragged piece while dragging
+    if(p.dragging) return;
+    p.tx = x; p.ty = y;
+    p.baseTx = x; p.baseTy = y;
+    // keep a clean stack ordering
+    p.el.style.zIndex = String(10 + i);
+  });
+  zTop = Math.max(zTop, 10 + z1.length + 5);
+}
+
+function closeHUDsMobile(){
+  closeAllHUD();
+  clearSelection();
+}
+/* ===== end v6-6 ===== */
 
 
 let maxScale = isMobile ? 1.0 : 2.5;
@@ -1051,30 +1075,26 @@ function createPiece(meta){
     phase: Math.random()*Math.PI*2,
     dragging: false,
     moved: 0,
+    suppressClickUntil: 0,
+    previewed: false,
     s: 1,
-    ts: 1,
-    suppressClickUntil: 0
+    ts: 1
   };
   pieces.push(p);
 
   /* DRAG: do NOT open HUDs */
-  el\.addEventListener\(\"pointerdown\", e => \{
-    if\(isMobile && !e\.target\.closest\(\"\.card\"\)\) return;
-    // v6-5 mobile: only the top card in Zone 1 can be dragged out
-    if(isMobile){
-      const z = mobileZone.get(p)||'z1';
-      if(z==='z1'){
-        const top = deckTop();
-        if(top !== p) return;
-      }else{
-        // cards already placed are not draggable in this mode
-        return;
-      }
-    }
-
+  el.addEventListener("pointerdown", e => {
+    if(isMobile && !e.target.closest(".card")) return;
     // Only start interactions when the user touches the card surface (not HUDs/controls).
     if(!e.target.closest(".card")) return;
     if(e.target.closest(".hud") || e.target.closest(".flipBtn") || e.target.closest(".irBtn") || e.target.closest("button") || e.target.closest("a")) return;
+    // v6-6 drag gate (mobile): only top card in Zone 1, and only after preview
+    if(isMobile){
+      const z = mobileZone.get(p)||"z1";
+      if(z !== "z1") return;
+      if(!isTopCard(p)) return;
+      if(!p.previewed) return;
+    }
     p.dragging = true;
     p.moved = 0;
     p.startX = e.clientX;
@@ -1095,36 +1115,61 @@ function createPiece(meta){
   el.addEventListener("pointerup", (e) => {
     if(!p.dragging) return;
     p.dragging = false;
+    if(isMobile){
+      const ok = dropToZone(p, e.clientX, e.clientY);
+      if(ok){
+        // snap success
+        p.ts = 1;
+        p.el.classList.remove('lit');
+        p.el.classList.remove('hudOpen');
+        closeHUDsMobile();
+        normalizeZone1Stack();
+      }else{
+        // remain in zone1 (still enlarged), just re-stack
+        setZone(p,'z1');
+        layoutMobileZones();
+      }
+    }
     if(p.moved > 6){
       p.suppressClickUntil = performance.now() + 250;
     }
   });
 
     /* CLICK toggles HUDs (only if not dragged) */
-  el\.addEventListener\(\"click\", e => \{
-    if\(e\.target\.closest\(\"\.flipBtn\"\) \|\| e\.target\.closest\(\"\.irBtn\"\)\) return;
-    if\(performance\.now\(\) < p\.suppressClickUntil\) return;
-
-    // v6-5 mobile click sequence (top card preview -> HUDs)
-    if(isMobile){
-      const z = mobileZone.get(p)||'z1';
-      if(z==='z1'){
-        const top = deckTop();
-        if(top !== p) return; // only top card is interactive
-        // First click: enlarge + glow (no HUD)
-        if(p.ts < 2.0){
-          closeAllHUD();
-          clearSelection();
-          p.ts = 3;
-          p.el.classList.add('lit');
-          refreshDeckVisibility();
-          return;
-        }
-      }
-    }
+  el.addEventListener("click", e => {
+    if(e.target.closest(".flipBtn") || e.target.closest(".irBtn")) return;
+    if(performance.now() < p.suppressClickUntil) return;
 
     // SOLO FRONTAL: no seleccionar/abrir HUD si estamos viendo el BACK
     if(card.classList.contains("flipped")) return;
+
+    // v6-6 click sequence (mobile): 1st click preview (x3 + glow), 2nd click HUDs
+    if(isMobile){
+      const z = mobileZone.get(p)||'z1';
+      if(z==='z1'){
+        if(!isTopCard(p)) return;
+        if(!p.previewed){
+          closeHUDsMobile();
+          p.previewed = true;
+          p.ts = 3;
+          p.el.classList.add('lit');
+          p.el.style.zIndex = String(++zTop);
+          return;
+        }
+        // already previewed -> toggle HUDs
+        const willOpenM = !el.classList.contains('hudOpen');
+        closeAllHUD();
+        if(willOpenM){
+          el.classList.add('flash');
+          setTimeout(()=>el.classList.remove('flash'), 210);
+          el.classList.add('hudOpen');
+        }
+        return;
+      }
+      // if card is in read/pending, ignore clicks
+      return;
+    }
+
 
     const willOpen = !el.classList.contains("hudOpen");
     closeAllHUD();
@@ -1156,8 +1201,9 @@ function loadManifest(data){
   }
   data.cards.forEach((m)=>{ const p=createPiece(m); if(isMobile){ setZone(p,'z1'); } });
   totalEl.innerHTML = `TOTAL: <span class="num">${data.cards.length}</span>`;
-  if(isMobile){ zRead=[]; zPending=[]; syncCounts(); requestAnimationFrame(()=>{ layoutMobileZones(); refreshDeckVisibility(); }); }
+  if(isMobile){ zRead=[]; zPending=[]; syncCounts(); requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
   stackCenter();
+  if(isMobile){ requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
 }
 
 fetch("manifest/manifest.json", {cache:"no-store"}).then(r=>r.json()).then(loadManifest).catch(()=>{});
@@ -1170,13 +1216,13 @@ function stackCenter(){
 
   if(isMobile){
     zRead=[]; zPending=[];
-    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.el.style.zIndex = (i+1); p.ts = 1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); });
-    zTop = pieces.length + 5;
+    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
+    zTop = 10 + pieces.length + 10;
     syncCounts();
     scale=1; panX=0; panY=0;
     updateBgMetrics();
     updateView();
-    requestAnimationFrame(()=>{ layoutMobileZones(); refreshDeckVisibility(); });
+    requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); });
     return;
   }
 
@@ -1209,13 +1255,13 @@ function dealRandom(){
 
   if(isMobile){
     zRead=[]; zPending=[];
-    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.el.style.zIndex = (i+1); p.ts = 1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); });
-    zTop = pieces.length + 5;
+    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
+    zTop = 10 + pieces.length + 10;
     syncCounts();
     scale=1; panX=0; panY=0;
     updateBgMetrics();
     updateView();
-    requestAnimationFrame(()=>{ layoutMobileZones(); refreshDeckVisibility(); });
+    requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); });
     return;
   }
   closeAllHUD();
@@ -1230,49 +1276,20 @@ function dealRandom(){
 }
 
 function drawOne(){
-  // v6-5 mobile: "SACAR UNA" highlights the top card (doesn't advance deck)
   if(isMobile){
-    if(!pieces.length) return;
-    closeAllHUD();
-    clearSelection();
     const p = deckTop();
     if(!p) return;
-    p.el.style.zIndex = ++zTop;
+    // behave like first click: preview card (x3 + glow)
+    closeHUDsMobile();
+    p.previewed = true;
     p.ts = 3;
     p.el.classList.add('lit');
-    // small nudge like reveal
-    p.tx += 6; p.ty += 6;
-    p.el.classList.add('flash');
-    setTimeout(()=>p.el.classList.remove('flash'), 210);
-    refreshDeckVisibility();
+    p.el.style.zIndex = String(++zTop);
     return;
   }
   if(!pieces.length) return;
   closeAllHUD();
   clearSelection();
-  closeAllHUD();
-  const p = pieces[Math.floor(Math.random()*pieces.length)];
-  p.el.style.zIndex = ++zTop;
-  p.tx += 18;
-  p.ty += 18;
-  p.el.classList.add("flash");
-  setTimeout(()=>p.el.classList.remove("flash"), 210);
-}
-  if(!pieces.length) return;
-  closeAllHUD();
-  clearSelection();
-
-  if(isMobile){
-    zRead=[]; zPending=[];
-    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.el.style.zIndex = (i+1); p.ts = 1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); });
-    zTop = pieces.length + 5;
-    syncCounts();
-    scale=1; panX=0; panY=0;
-    updateBgMetrics();
-    updateView();
-    requestAnimationFrame(()=>{ layoutMobileZones(); refreshDeckVisibility(); });
-    return;
-  }
   closeAllHUD();
   const p = pieces[Math.floor(Math.random()*pieces.length)];
   p.el.style.zIndex = ++zTop;
@@ -1285,9 +1302,11 @@ function drawOne(){
 btnDeck.addEventListener("click", () => {
   if(isMobile){
     if(confirm("¿Reiniciar Mazo?")) stackCenter();
+  if(isMobile){ requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
     return;
   }
   stackCenter();
+  if(isMobile){ requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
 });
 btnDeal.addEventListener("click", dealRandom);
 btnDraw.addEventListener("click", drawOne);
@@ -1301,13 +1320,13 @@ btnFrame.addEventListener("click", () => {
 
   if(isMobile){
     zRead=[]; zPending=[];
-    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.el.style.zIndex = (i+1); p.ts = 1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); });
-    zTop = pieces.length + 5;
+    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.previewed=false; p.ts=1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); p.el.style.zIndex=String(10+i); });
+    zTop = 10 + pieces.length + 10;
     syncCounts();
     scale=1; panX=0; panY=0;
     updateBgMetrics();
     updateView();
-    requestAnimationFrame(()=>{ layoutMobileZones(); refreshDeckVisibility(); });
+    requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); });
     return;
   }
   scale = homeScale;
@@ -1322,16 +1341,8 @@ document.addEventListener("pointerdown", (e)=>{
   if(e.target.closest(".piece")) return;
   closeAllHUD();
   clearSelection();
-
   if(isMobile){
-    zRead=[]; zPending=[];
-    pieces.forEach((p,i)=>{ setZone(p,'z1'); p.el.style.zIndex = (i+1); p.ts = 1; p.el.classList.remove('lit'); p.el.classList.remove('hudOpen'); });
-    zTop = pieces.length + 5;
-    syncCounts();
-    scale=1; panX=0; panY=0;
-    updateBgMetrics();
-    updateView();
-    requestAnimationFrame(()=>{ layoutMobileZones(); refreshDeckVisibility(); });
+    // v6-6: outside click only hides HUDs (does not reset zones)
     return;
   }
 }, {capture:true});
@@ -1477,7 +1488,7 @@ function tick(){
     }
     p.x += (p.tx - p.x) * (isMobile ? 0.35 : 0.15);
     p.y += (p.ty - p.y) * (isMobile ? 0.35 : 0.15);
-    p.s += (p.ts - p.s) * 0.22;
+    p.s += (p.ts - p.s) * (isMobile ? 0.22 : 0.15);
     p.el.style.transform = `translate(${p.x}px,${p.y}px) scale(${p.s})`;
   }
   requestAnimationFrame(tick);
@@ -1485,7 +1496,7 @@ function tick(){
 tick();
 updateBgMetrics();
 updateView();
-if(isMobile){ requestAnimationFrame(()=>{ layoutMobileZones(); refreshDeckVisibility(); }); }
+if(isMobile){ requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
 
 window.addEventListener("resize", ()=>{
   updateBgMetrics();
