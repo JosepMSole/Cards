@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-13</title>
+<title>DECK 6-14</title>
 
 <style>
 :root{
@@ -230,7 +230,7 @@ header button.hdrBtn.active{
   inset:0;
   transform-origin:0 0;
   will-change:transform;
-  z-index:1;
+  z-index:5;
 }
 
 #bg{
@@ -877,7 +877,7 @@ header button.hdrBtn.active{
   box-shadow:0 18px 50px rgba(0,0,0,.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  z-index:2;
+  z-index:3;
   display:none; /* enabled on desktop via media query */
   overflow:hidden;
 }
@@ -1068,7 +1068,7 @@ function layoutMobileZones(){
   const z1x = W1.x + (W1.w - w)/2;
   const z1y = W1.y + (W1.h - h)/2;
 
-  (readMode ? readPile : tablePieces()).forEach((p)=>{
+  activePieces().forEach((p)=>{
     const z = mobileZone.get(p) || "z1";
     if(z === "z1"){
       p.tx = z1x; p.baseTx = z1x;
@@ -1235,8 +1235,13 @@ let pieces = [];
 let readPile = [];          // pieces stored in read area
 let readMode = false;
 let parked = new Map();     // piece -> {tx,ty,ts,zIndex,rot,flip}
+function tablePieces(){
+  return pieces.filter(p => !readPile.includes(p));
+}
 function activePieces(){
-  return readMode ? readPile : pieces;
+  // Normal mode: only cards on the table (excluding LEÍDAS pile).
+  // Read mode: only LEÍDAS cards (other cards are parked/off-screen).
+  return readMode ? readPile : tablePieces();
 }
 function setTotalCount(n){
   const totalEl = document.getElementById("total");
@@ -1244,9 +1249,8 @@ function setTotalCount(n){
   totalEl.innerHTML = `TOTAL: <span class="num">${n}</span>`;
 }
 function updateTotalForMode(){
-  if(readMode){
-    setTotalCount(readPile.length);
-  }else{
+  setTotalCount(activePieces().length);
+}else{
     setTotalCount(pieces.length);
   }
 }
@@ -1262,15 +1266,24 @@ function layoutReadPileStack(){
   if(!ra) return;
   const s = stage.getBoundingClientRect();
   const r = ra.getBoundingClientRect();
-  // world coords (scale/pan apply)
-  const x = (r.left - s.left - panX)/scale + 18;
-  const y = (r.top  - s.top  - panY)/scale + 24;
+  const cs = getComputedStyle(document.documentElement);
+  const cardW = parseFloat(cs.getPropertyValue("--cardW")) || 110;
+  const cardH = parseFloat(cs.getPropertyValue("--cardH")) || 160;
+
+  const worldLeft = (r.left - s.left - panX)/scale;
+  const worldTop  = (r.top  - s.top  - panY)/scale;
+  const worldW    = r.width/scale;
+  const worldH    = r.height/scale;
+
+  const baseX = worldLeft + (worldW - cardW)/2;
+  const baseY = worldTop  + (worldH - cardH)/2;
+
   const off = 6;
   readPile.forEach((p,i)=>{
-    p.tx = x + i*off;
-    p.ty = y + i*off*0.55;
+    p.tx = baseX + i*off;
+    p.ty = baseY + i*off*0.55;
     p.ts = 1;
-    p.el.style.zIndex = String(800 + i);
+    p.el.style.zIndex = String(950 + i);
   });
 }
 
@@ -1452,7 +1465,7 @@ function clearSelection(){
 }
 
 function closeAllHUD(){
-  (readMode ? readPile : tablePieces()).forEach(p => p.el.classList.remove("hudOpen"));
+  activePieces().forEach(p => p.el.classList.remove("hudOpen"));
 }
 
 /* CREATE CARD */
@@ -1731,7 +1744,7 @@ function stackCenter(){
     readPile = [];
   }
 
-  if(!pieces.length) return;
+  if(!activePieces().length) return;
   closeAllHUD();
   clearSelection();
 
@@ -1770,7 +1783,7 @@ function stackCenter(){
 }
 
 function dealRandom(){
-  if(!pieces.length) return;
+  if(!activePieces().length) return;
   closeAllHUD();
   clearSelection();
 
@@ -1789,7 +1802,7 @@ function dealRandom(){
   const rect = stage.getBoundingClientRect();
   const maxX = Math.max(0, rect.width/scale - 175 - 12);
   const maxY = Math.max(0, rect.height/scale - 246 - 12);
-  pieces.forEach(p=>{
+  activePieces().forEach(p=>{
     p.tx = 6 + Math.random()*maxX;
     p.ty = 6 + Math.random()*maxY;
     p.el.style.zIndex = ++zTop;
@@ -1808,7 +1821,7 @@ function drawOne(){
     p.el.style.zIndex = String(++zTop);
     return;
   }
-  if(!pieces.length) return;
+  if(!activePieces().length) return;
   closeAllHUD();
   clearSelection();
   closeAllHUD();
@@ -2037,10 +2050,13 @@ function tick(){
   const t = performance.now()*0.002;
   for(const p of pieces){
     if(moverOn && !p.dragging){
-      if(isMobile){
+      const ok = readMode ? readPile.includes(p) : !readPile.includes(p);
+      if(ok){
+if(isMobile){
         p.tx = p.baseTx + Math.sin(t + p.phase) * 10;
         p.ty = p.baseTy + Math.cos(t*0.9 + p.phase*1.3) * 10;
-      }else{
+      }
+    }else{
         p.tx += Math.sin(t + p.phase) * 0.35;
         p.ty += Math.cos(t*0.9 + p.phase*1.3) * 0.35;
       }
