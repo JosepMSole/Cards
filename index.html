@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-26</title>
+<title>DECK 6-27</title>
 
 <style>
 :root{
@@ -1032,12 +1032,10 @@ header button.hdrBtn.active{
 /* ===== end v6-25 ===== */
 
 
-/* ===== v6-26: stack shadow limiting + pile alignment ===== */
-.piece.noShadow .card{
-  box-shadow:none !important;
-  filter:none !important;
-}
-/* ===== end v6-26 ===== */
+/* ===== v6-27: limit stacked shadows (only first 3) ===== */
+.piece.noShadow .card{ box-shadow:none !important; }
+.piece.noShadow .card{ filter:none !important; }
+/* ===== end v6-27 ===== */
 
 </style>
 </head>
@@ -1334,12 +1332,8 @@ function showHudZonesFor(p){
 let maxScale = isMobile ? 1.0 : 2.5;
 
 let pieces = [];
-// v6-26: expose internals for safe UI hooks
-window.__deckExports = true;
-window.__getPieces = ()=>pieces;
 // ===== v6-12 DESKTOP read mode =====
-let readPile = [];
-window.__getReadPile = ()=>readPile;          // pieces stored in read area
+let readPile = [];          // pieces stored in read area
 let readMode = false;
 let parked = new Map();     // piece -> {tx,ty,ts,zIndex,rot,flip}
 function tablePieces(){
@@ -1353,8 +1347,7 @@ function activePieces(){
 function setTotalCount(n){
   const totalEl = document.getElementById("total");
   if(!totalEl) return;
-  const v = (typeof initialTotal !== 'undefined' && initialTotal) ? initialTotal : n;
-  totalEl.innerHTML = `TOTAL: <span class="num">${v}</span>`;
+  totalEl.innerHTML = `TOTAL: <span class="num">${n}</span>`;
 }
 function updateTotalForMode(){
   setTotalCount(activePieces().length);
@@ -1368,9 +1361,11 @@ function inRect(x,y,r){ return r && x>=r.left && x<=r.right && y>=r.top && y<=r.
 
 function layoutReadPileStack(){
   const ra = document.getElementById("readArea");
-  if(!ra) return;
+  const slot = document.querySelector("#readArea .readSlot");
+  if(!ra || !slot) return;
+
   const s = stage.getBoundingClientRect();
-  const r = ra.getBoundingClientRect();
+  const r = slot.getBoundingClientRect();
   const cs = getComputedStyle(document.documentElement);
   const cardW = parseFloat(cs.getPropertyValue("--cardW")) || 110;
   const cardH = parseFloat(cs.getPropertyValue("--cardH")) || 160;
@@ -1383,13 +1378,12 @@ function layoutReadPileStack(){
   const baseX = worldLeft + (worldW - cardW)/2;
   const baseY = worldTop  + (worldH - cardH)/2;
 
-  const off = 0;
+  // v6-27: stack perfectly centered (no diagonal). Limit shadow stacking after 3 cards.
   readPile.forEach((p,i)=>{
     p.tx = baseX;
     p.ty = baseY;
     p.ts = 1;
-    // v6-26: limit shadows after 3 stacked cards
-    if(i>=3) p.el.classList.add('noShadow'); else p.el.classList.remove('noShadow');
+    if(i>=3) p.el.classList.add("noShadow"); else p.el.classList.remove("noShadow");
     p.el.style.zIndex = String(950 + i);
   });
 }
@@ -1476,8 +1470,9 @@ function removeFromReadPile(p){
 }
 
 function isInReadArea(clientX, clientY){
-  const ra = readAreaRects();
-  return inRect(clientX, clientY, ra);
+  const slot = document.querySelector('#readArea .readSlot');
+  const r = slot ? slot.getBoundingClientRect() : readAreaRects();
+  return inRect(clientX, clientY, r);
 }
 
 // Click on read area enters mode
@@ -1738,7 +1733,6 @@ function createPiece(meta){
         removeFromReadPile(p);
         p.el.style.zIndex = String(++zTop);
       }
-      }
     }
     // v6-15 desktop remove from read area
 
@@ -1858,9 +1852,7 @@ function loadManifest(data){
     return;
   }
   data.cards.forEach((m)=>{ const p=createPiece(m); if(isMobile){ setZone(p,'z1'); } });
-  if(typeof initialTotal === 'undefined') window.initialTotal = 0;
-  if(!initialTotal) initialTotal = data.cards.length;
-  totalEl.innerHTML = `TOTAL: <span class="num">${initialTotal}</span>`;
+  totalEl.innerHTML = `TOTAL: <span class="num">${data.cards.length}</span>`;
   if(!isMobile){ updateTotalForMode(); }
   if(isMobile){ zRead=[]; zPending=[]; syncCounts(); requestAnimationFrame(()=>{ layoutMobileZones(); normalizeZone1Stack(); }); }
   stackCenter();
@@ -2182,13 +2174,17 @@ function tick(){
   const t = performance.now()*0.002;
   for(const p of pieces){
     if(moverOn && !p.dragging){
-      if(typeof readPile !== 'undefined' && readPile.includes(p)) { /* keep still */ } else {
-const ok = readMode ? readPile.includes(p) : !readPile.includes(p);
+      if(p._freezeMover) {
+        // v6-27: keep LEÍDAS pile still
+      } else {
+      const ok = readMode ? readPile.includes(p) : !readPile.includes(p);
       if(ok){
 if(isMobile){
         p.tx = p.baseTx + Math.sin(t + p.phase) * 10;
         p.ty = p.baseTy + Math.cos(t*0.9 + p.phase*1.3) * 10;
+      
       }
+    }
     }else{
         p.tx += Math.sin(t + p.phase) * 0.35;
         p.ty += Math.cos(t*0.9 + p.phase*1.3) * 0.35;
