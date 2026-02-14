@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-28</title>
+<title>DECK 6-29</title>
 
 <style>
 :root{
@@ -1005,7 +1005,7 @@ header button.hdrBtn.active{
   gap:8px;
 }
 .miniCountDesk .num{ font-size:1.55em; font-weight:1000; }
-.piece.inReadPile{ pointer-events:none !important; }
+.piece.inReadPile{ /* pointer-events managed by JS (v6-29) */ }
 .piece.inReadPile .hudAction,
 .piece.inReadPile .hudInfo,
 .piece.inReadPile .hud,
@@ -1034,13 +1034,18 @@ header button.hdrBtn.active{
 
 /* ===== v6-28: LEÍDAS pile visuals ===== */
 .piece.noShadow .card{ box-shadow:none !important; filter:none !important; }
-.piece.inReadPile{ pointer-events:none !important; }
+.piece.inReadPile{ /* pointer-events managed by JS (v6-29) */ }
 .piece.inReadPile .hudAction,
 .piece.inReadPile .hudInfo,
 .piece.inReadPile .hud,
 .piece.inReadPile .irBtn,
 .piece.inReadPile .flipBtn{ display:none !important; }
 /* ===== end v6-28 ===== */
+
+
+/* ===== v6-29 shadow-only-bottom (cluster + readpile) ===== */
+.piece.noShadow .card{ box-shadow:none !important; filter:none !important; }
+/* ===== end v6-29 shadow-only-bottom ===== */
 
 </style>
 </head>
