@@ -1,6 +1,6 @@
 {
   "version": "builder_v38",
-  "exportedAt": "2026-02-13T23:50:21.342Z",
+  "exportedAt": "2026-02-14T00:23:30.816Z",
   "cards": [
     {
       "num": "#001",
@@ -196,6 +196,201 @@
       },
       "hudText": "Si algo había quedado claro tras el Conflicto Lunar, era que los Exteriores habían llegado para quedarse…",
       "url": "https://www.disturbingstories.com/159.html"
+    },
+    {
+      "num": "#016",
+      "front": "MISTERY CARD - 005.jpg",
+      "back": "005 - La Maquina de Escribir - v2.jpg",
+      "hud": "005 - FRAME 1.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": -27,
+        "scale": 1
+      },
+      "hudText": "¿Hasta dónde llega la curiosidad antes de convertirse en ego?",
+      "url": "https://www.disturbingstories.com/005.html"
+    },
+    {
+      "num": "#017",
+      "front": "MISTERY CARD - 006.jpg",
+      "back": "006 - Neuro-Madness - v5.jpg",
+      "hud": "006 - FRAME 3.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 57,
+        "scale": 1
+      },
+      "hudText": "Los estudios cerebrales, a veces, topan con recovecos terroríficos e imprevistos…",
+      "url": "https://www.disturbingstories.com/006.html"
+    },
+    {
+      "num": "#018",
+      "front": "MISTERY CARD - 009.jpg",
+      "back": "009 - El Piloto - v2.jpg",
+      "hud": "009 - FRAME 3.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": -60,
+        "scale": 1
+      },
+      "hudText": "Acompaña a un piloto a bordo de su carguero espacial en una rutinaria misión… ",
+      "url": "https://www.disturbingstories.com/009.html"
+    },
+    {
+      "num": "#019",
+      "front": "MISTERY CARD - 021.jpg",
+      "back": "021 - Virgilius - v2.jpg",
+      "hud": "021 - FRAME 1.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": -58,
+        "scale": 1
+      },
+      "hudText": "¿Puede un ser artificial entender el significado de la ética y la moralidad?",
+      "url": "https://www.disturbingstories.com/021.html"
+    },
+    {
+      "num": "#020",
+      "front": "MISTERY CARD - 028.jpg",
+      "back": "028 - Hermanos - v8.jpg",
+      "hud": "028 - FRAMES 4.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 40,
+        "scale": 1
+      },
+      "hudText": "Pase lo que pase, un hermano siempre debe estar ahí…",
+      "url": "https://www.disturbingstories.com/028.html"
+    },
+    {
+      "num": "#021",
+      "front": "MISTERY CARD - 033.jpg",
+      "back": "033 - La Maldicion del Escarabajo - v6.jpg",
+      "hud": "033 - FRAME 1.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": -7,
+        "scale": 1
+      },
+      "hudText": "Acompaña a un intrépido arqueólogo en la búsqueda de una legendaria pirámide…",
+      "url": "https://www.disturbingstories.com/033.html"
+    },
+    {
+      "num": "#022",
+      "front": "MISTERY CARD - 069.jpg",
+      "back": "069 - Distorsion Phelps - v5.jpg",
+      "hud": "069 - Framee.png",
+      "hudCrop": {
+        "x": 0,
+        "y": 56,
+        "scale": 1
+      },
+      "hudText": "El Doctor Desmond Phelps recibe un encargo que marcará su vida para siempre…",
+      "url": "https://www.disturbingstories.com/069.html"
+    },
+    {
+      "num": "#023",
+      "front": "MISTERY CARD - 085.jpg",
+      "back": "085 - Noche Estrellada - v2.jpg",
+      "hud": "085 - FRAME 2.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 15,
+        "scale": 1
+      },
+      "hudText": "Leo y Nox disfrutan de una bonita vista del cielo nocturno, contemplando las estrellas…",
+      "url": "https://www.disturbingstories.com/085.html"
+    },
+    {
+      "num": "#024",
+      "front": "MISTERY CARD - 137.jpg",
+      "back": "137 - Dolor de Muelas - v1.jpg",
+      "hud": "137 - FRAME 4.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 4,
+        "scale": 1
+      },
+      "hudText": "¿Alguna vez han sufrido de algún intenso dolor durante mucho tiempo?",
+      "url": "https://www.disturbingstories.com/137.html"
+    },
+    {
+      "num": "#025",
+      "front": "MISTERY CARD - 153.jpg",
+      "back": "153 - DARK LIMITS Tormenta en la Costa - v2.jpg",
+      "hud": "153 - FRAME 1.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": -37,
+        "scale": 1
+      },
+      "hudText": "Una peligrosa tormenta esconde un horrible secreto que descubrirá el pequeño Ramon…",
+      "url": "https://www.disturbingstories.com/153.html"
+    },
+    {
+      "num": "#026",
+      "front": "MISTERY CARD - 157.jpg",
+      "back": "157 - El Ascenso de Gideon - v3.jpg",
+      "hud": "157 - FRAME 3.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 43,
+        "scale": 1
+      },
+      "hudText": "Un sistema injusto puede engendrar soluciones drásticas…",
+      "url": "https://www.disturbingstories.com/157.html"
+    },
+    {
+      "num": "#027",
+      "front": "MISTERY CARD - 163.jpg",
+      "back": "163 - Catherine en la Isla - v3.jpg",
+      "hud": "163 - FRAME 1.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 21,
+        "scale": 1
+      },
+      "hudText": "La soledad prolongada es la peor prisión para una persona…",
+      "url": "https://www.disturbingstories.com/163.html"
+    },
+    {
+      "num": "#028",
+      "front": "MISTERY CARD - 167.jpg",
+      "back": "167 - Una Vampira Diferente - v4b.jpg",
+      "hud": "167 - FRAME 2.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 42,
+        "scale": 1
+      },
+      "hudText": "Los balones, desgraciadamente, siempre acaban cayendo en algún cementerio abandonado…",
+      "url": "https://www.disturbingstories.com/167.html"
+    },
+    {
+      "num": "#029",
+      "front": "MISTERY CARD - 184.jpg",
+      "back": "184 - Agrokinesis - v5.jpg",
+      "hud": "184 - Frame 1.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 0,
+        "scale": 1
+      },
+      "hudText": "Conoce a Eve, una peculiar muchacha con una gran conexión con la naturaleza… ",
+      "url": "https://www.disturbingstories.com/184.html"
+    },
+    {
+      "num": "#030",
+      "front": "MISTERY CARD - 274.jpg",
+      "back": "274 - Vahl - El Caido - v4.jpg",
+      "hud": "274 - FRAME 2.jpg",
+      "hudCrop": {
+        "x": 0,
+        "y": 0,
+        "scale": 1
+      },
+      "hudText": "¿Está el mundo preparado para la locura y genialidad de la preclara mente de Vahl?",
+      "url": "https://www.disturbingstories.com/274.html"
     }
   ]
 }
