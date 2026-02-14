@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-24</title>
+<title>DECK 6-25</title>
 
 <style>
 :root{
@@ -1012,6 +1012,24 @@ header button.hdrBtn.active{
 .piece.inReadPile .irBtn,
 .piece.inReadPile .flipBtn{ display:none !important; }
 /* ===== end v6-24 ===== */
+
+
+/* ===== v6-25 DESKTOP: show LEÍDAS button below drop zone ===== */
+@media (min-width:769px){
+  #readArea{
+    overflow: visible !important; /* allow button to render outside blur box */
+  }
+  #btnReadArea{
+    display:flex !important;
+    justify-content:center !important;
+    align-items:center !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    top:calc(100% + 14px) !important;
+    z-index:10000 !important;
+  }
+}
+/* ===== end v6-25 ===== */
 
 </style>
 </head>
