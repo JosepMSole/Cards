@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DECK 6-27</title>
+<title>DECK 6-28</title>
 
 <style>
 :root{
@@ -1032,10 +1032,15 @@ header button.hdrBtn.active{
 /* ===== end v6-25 ===== */
 
 
-/* ===== v6-27: limit stacked shadows (only first 3) ===== */
-.piece.noShadow .card{ box-shadow:none !important; }
-.piece.noShadow .card{ filter:none !important; }
-/* ===== end v6-27 ===== */
+/* ===== v6-28: LEÍDAS pile visuals ===== */
+.piece.noShadow .card{ box-shadow:none !important; filter:none !important; }
+.piece.inReadPile{ pointer-events:none !important; }
+.piece.inReadPile .hudAction,
+.piece.inReadPile .hudInfo,
+.piece.inReadPile .hud,
+.piece.inReadPile .irBtn,
+.piece.inReadPile .flipBtn{ display:none !important; }
+/* ===== end v6-28 ===== */
 
 </style>
 </head>
@@ -1360,10 +1365,8 @@ function readAreaRects(){
 function inRect(x,y,r){ return r && x>=r.left && x<=r.right && y>=r.top && y<=r.bottom; }
 
 function layoutReadPileStack(){
-  const ra = document.getElementById("readArea");
-  const slot = document.querySelector("#readArea .readSlot");
-  if(!ra || !slot) return;
-
+  const slot = document.querySelector("#readArea .readSlot") || document.getElementById("readArea");
+  if(!slot) return;
   const s = stage.getBoundingClientRect();
   const r = slot.getBoundingClientRect();
   const cs = getComputedStyle(document.documentElement);
@@ -1378,7 +1381,7 @@ function layoutReadPileStack(){
   const baseX = worldLeft + (worldW - cardW)/2;
   const baseY = worldTop  + (worldH - cardH)/2;
 
-  // v6-27: stack perfectly centered (no diagonal). Limit shadow stacking after 3 cards.
+  // v6-28: centered pile (no diagonal). Shadow only for first 3 cards.
   readPile.forEach((p,i)=>{
     p.tx = baseX;
     p.ty = baseY;
@@ -1470,9 +1473,8 @@ function removeFromReadPile(p){
 }
 
 function isInReadArea(clientX, clientY){
-  const slot = document.querySelector('#readArea .readSlot');
-  const r = slot ? slot.getBoundingClientRect() : readAreaRects();
-  return inRect(clientX, clientY, r);
+  const ra = readAreaRects();
+  return inRect(clientX, clientY, ra);
 }
 
 // Click on read area enters mode
@@ -2174,17 +2176,12 @@ function tick(){
   const t = performance.now()*0.002;
   for(const p of pieces){
     if(moverOn && !p.dragging){
-      if(p._freezeMover) {
-        // v6-27: keep LEÍDAS pile still
-      } else {
       const ok = readMode ? readPile.includes(p) : !readPile.includes(p);
       if(ok){
 if(isMobile){
         p.tx = p.baseTx + Math.sin(t + p.phase) * 10;
         p.ty = p.baseTy + Math.cos(t*0.9 + p.phase*1.3) * 10;
-      
       }
-    }
     }else{
         p.tx += Math.sin(t + p.phase) * 0.35;
         p.ty += Math.cos(t*0.9 + p.phase*1.3) * 0.35;
